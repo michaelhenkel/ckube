@@ -1,0 +1,102 @@
+module github.com/michaelhenkel/ckube
+
+go 1.13
+
+require (
+	cloud.google.com/go v0.53.0 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
+	github.com/Azure/go-autorest v12.2.0+incompatible
+	github.com/Azure/go-autorest/autorest v0.9.0
+	github.com/Azure/go-autorest/autorest/adal v0.5.0
+	github.com/Azure/go-autorest/autorest/to v0.2.0
+	github.com/Juniper/contrail-operator v0.0.0-20200122001444-1b19a3665b33
+	github.com/Microsoft/go-winio v0.4.12
+	github.com/ScaleFT/sshkeys v0.0.0-20181112160850-82451a803681 // indirect
+	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
+	github.com/containerd/cgroups v0.0.0-20200226104544-44306b6a1d46 // indirect
+	github.com/containerd/console v0.0.0-20180307192801-cb7008ab3d83 // indirect
+	github.com/containerd/containerd v1.3.0
+	github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00 // indirect
+	github.com/containerd/ttrpc v0.0.0-20200121165050-0be804eadb15 // indirect
+	github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d // indirect
+	github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a // indirect
+	github.com/docker/cli v0.0.0-20190506213505-d88565df0c2d
+	github.com/docker/compose-on-kubernetes v0.4.24 // indirect
+	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/docker v1.4.2-0.20181221150755-2cb26cfe9cbf
+	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
+	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
+	github.com/docker/go-p9p v0.0.0-20170223181108-87ae8514a3a2 // indirect
+	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/go-ini/ini v1.27.3-0.20170519023713-afbc45e87f3b // indirect
+	github.com/gogo/googleapis v1.3.2 // indirect
+	github.com/google/uuid v1.1.1
+	github.com/gophercloud/utils v0.0.0-20181029231510-34f5991525d1 // indirect
+	github.com/jinzhu/gorm v1.9.12 // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/linuxkit/linuxkit v0.0.0-20200225232921-a2617fbd3900
+	github.com/miekg/pkcs11 v1.0.3 // indirect
+	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936 // indirect
+	github.com/moby/datakit v0.0.0-20170703142523-97b3d2305353 // indirect
+	github.com/moby/hyperkit v0.0.0-20180416161519-d65b09c1c28a
+	github.com/moby/vpnkit v0.1.2-0.20171107134956-0e4293bb1058
+	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/moul/anonuuid v1.1.0 // indirect
+	github.com/moul/gotty-client v1.7.1-0.20180526075433-e5589f6df359 // indirect
+	github.com/opencontainers/go-digest v1.0.0-rc1
+	github.com/opencontainers/runc v1.0.0-rc5.0.20180615140650-ad0f5255060d // indirect
+	github.com/opencontainers/runtime-spec v1.0.1
+	github.com/packethost/packngo v0.1.1-0.20171201154433-f1be085ecd6f // indirect
+	github.com/radu-matei/azure-sdk-for-go v5.0.0-beta.0.20161118192335-3b1282355199+incompatible
+	github.com/radu-matei/azure-vhd-utils v0.0.0-20170531165126-e52754d5569d
+	github.com/renstrom/fuzzysearch v1.0.1-0.20180302113537-7a8f9a1c4bed // indirect
+	github.com/rn/iso9660wrap v0.0.0-20171120145750-baf8d62ad315
+	github.com/scaleway/scaleway-sdk-go v0.0.0-20190617160902-20b731586975 // indirect
+	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/cobra v0.0.5
+	github.com/stretchr/testify v1.4.0
+	github.com/surma/gocpio v1.0.2-0.20160926205914-fcb68777e7dc
+	github.com/theupdateframework/notary v0.6.0
+	github.com/tmc/scp v0.0.0-20170824174625-f7b48647feef // indirect
+	github.com/xeipuuv/gojsonschema v1.1.0
+	github.com/zchee/go-vmnet v0.0.0-20161021174912-97ebf9174097
+	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	google.golang.org/api v0.17.0
+	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
+	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
+	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
+	gopkg.in/yaml.v2 v2.2.8
+	k8s.io/api v0.0.0
+	k8s.io/apiextensions-apiserver v0.0.0
+	k8s.io/apimachinery v0.0.0
+	k8s.io/client-go v12.0.0+incompatible
+)
+
+replace (
+	k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190620085554-14e95df34f1f
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190620085212-47dc9a115b18
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190620085706-2090e6d8f84c
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20190620090043-8301c0bda1f0
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20190620090013-c9a0fc045dc1
+	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190612205613-18da4a14b22b
+	k8s.io/component-base => k8s.io/component-base v0.0.0-20190620085130-185d68e6e6ea
+	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190531030430-6117653b35f1
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20190620090116-299a7b270edc
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190620085325-f29e2b4a4f84
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20190620085942-b7f18460b210
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20190620085809-589f994ddf7f
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20190620085912-4acac5405ec6
+	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20191004125858-14647fd13a8b
+	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20190620085838-f1cb295a73c9
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20190620090156-2138f2c9de18
+	k8s.io/metrics => k8s.io/metrics v0.0.0-20190620085625-3b22d835f165
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190620085408-1aef9010884e
+)
+
+replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
