@@ -1,12 +1,15 @@
 package kuberesources
 
 import (
+	"fmt"
+
 	contrailv1 "github.com/Juniper/contrail-operator/pkg/apis/contrail/v1alpha1"
 	"github.com/ghodss/yaml"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
@@ -32,19 +35,24 @@ type RbacResources struct {
 }
 
 type CRDResources struct {
-	Cassandra        apiextensions.CustomResourceDefinition
-	Zookeeper        apiextensions.CustomResourceDefinition
-	Rabbitmq         apiextensions.CustomResourceDefinition
-	Config           apiextensions.CustomResourceDefinition
-	Control          apiextensions.CustomResourceDefinition
-	Kubemanager      apiextensions.CustomResourceDefinition
-	Webui            apiextensions.CustomResourceDefinition
-	Vrouter          apiextensions.CustomResourceDefinition
-	Manager          apiextensions.CustomResourceDefinition
-	Provisionmanager apiextensions.CustomResourceDefinition
+	Cassandra        apiextensionsv1.CustomResourceDefinition
+	Zookeeper        apiextensionsv1.CustomResourceDefinition
+	Rabbitmq         apiextensionsv1.CustomResourceDefinition
+	Config           apiextensionsv1.CustomResourceDefinition
+	Control          apiextensionsv1.CustomResourceDefinition
+	Kubemanager      apiextensionsv1.CustomResourceDefinition
+	Webui            apiextensionsv1.CustomResourceDefinition
+	Vrouter          apiextensionsv1.CustomResourceDefinition
+	Manager          apiextensionsv1.CustomResourceDefinition
+	Provisionmanager apiextensionsv1.CustomResourceDefinition
 }
 
 type managerClient struct {
+	restClient rest.Interface
+	ns         string
+}
+
+type crdClient struct {
 	restClient rest.Interface
 	ns         string
 }
@@ -63,42 +71,51 @@ func (c *managerClient) Create(name string, object *contrailv1.Manager) (*contra
 	return &result, err
 }
 
-func kubeClient(configPath string) (*kubernetes.Clientset, *rest.RESTClient, error) {
+func kubeClient(configPath string) (*kubernetes.Clientset, *rest.RESTClient, *apiextensionsclientset.Clientset, error) {
 	var err error
 	clientset := &kubernetes.Clientset{}
 	restClient := &rest.RESTClient{}
+	crdClient := &apiextensionsclientset.Clientset{}
 	kubeConfig := &rest.Config{}
 
 	kubeConfig, err = clientcmd.BuildConfigFromFlags("", configPath)
 	if err != nil {
-		return clientset, restClient, err
+		return clientset, restClient, crdClient, err
 	}
 
 	// create the clientset
 	contrailv1.SchemeBuilder.AddToScheme(scheme.Scheme)
+	apiextensionsv1.SchemeBuilder.AddToScheme(scheme.Scheme)
 
-	crdConfig := kubeConfig
-	crdConfig.ContentConfig.GroupVersion = &schema.GroupVersion{Group: contrailv1.SchemeGroupVersion.Group, Version: contrailv1.SchemeGroupVersion.Version}
-	crdConfig.APIPath = "/apis"
+	crConfig := kubeConfig
+	crConfig.ContentConfig.GroupVersion = &schema.GroupVersion{Group: contrailv1.SchemeGroupVersion.Group, Version: contrailv1.SchemeGroupVersion.Version}
+	crConfig.APIPath = "/apis"
 
 	//crdConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
-	crdConfig.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
-	crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
+	crConfig.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	crConfig.UserAgent = rest.DefaultKubernetesUserAgent()
 
-	restClient, err = rest.UnversionedRESTClientFor(crdConfig)
+	restClient, err = rest.UnversionedRESTClientFor(crConfig)
 	if err != nil {
-		return clientset, restClient, err
+		return clientset, restClient, crdClient, err
 	}
-	clientset, err = kubernetes.NewForConfig(crdConfig)
+
+	clientset, err = kubernetes.NewForConfig(crConfig)
 	if err != nil {
-		return clientset, restClient, err
+		return clientset, restClient, crdClient, err
 	}
-	return clientset, restClient, nil
+
+	crdClient, err = apiextensionsclientset.NewForConfig(crConfig)
+	if err != nil {
+		return clientset, restClient, crdClient, err
+	}
+
+	return clientset, restClient, crdClient, nil
 }
 
 func CreateContrailResources(configPath string) error {
 	contrailResources := newContrailResources()
-	clientSet, restClient, err := kubeClient(configPath)
+	clientSet, restClient, crdClientSet, err := kubeClient(configPath)
 	if err != nil {
 		return err
 	}
@@ -127,6 +144,49 @@ func CreateContrailResources(configPath string) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("Creating CRDs")
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Cassandra)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Zookeeper)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Rabbitmq)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Config)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Control)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Kubemanager)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Webui)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Vrouter)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Provisionmanager)
+	if err != nil {
+		return err
+	}
+	_, err = crdClientSet.ApiextensionsV1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Manager)
+	if err != nil {
+		return err
+	}
+	fmt.Println("CRDs created")
 
 	managerClient := &managerClient{
 		ns:         contrailResources.Namespace.Name,
@@ -286,8 +346,8 @@ func newContrailResources() ContrailResources {
 	return contrailResources
 }
 
-func createExtension(crd string) apiextensions.CustomResourceDefinition {
-	extensionRes := apiextensions.CustomResourceDefinition{}
+func createExtension(crd string) apiextensionsv1.CustomResourceDefinition {
+	extensionRes := apiextensionsv1.CustomResourceDefinition{}
 	err := yaml.Unmarshal([]byte(crd), &extensionRes)
 	if err != nil {
 		panic(err)
@@ -420,698 +480,725 @@ roleRef:
   name: contrail-operator
   apiGroup: rbac.authorization.k8s.io`
 
+// [spec.validation.openAPIV3Schema.properties[spec].properties[serviceConfiguration].properties[containers].type: Required value: must not be empty for specified object fields, spec.preserveUnknownFields: Invalid value: true: cannot set to true, set x-preserve-unknown-fields to true in spec.versions[*].schema instead]
+
 var crdCassandra = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: cassandras.contrail.juniper.net
 spec:
+  conversion:
+    strategy: None
   group: contrail.juniper.net
   names:
     kind: Cassandra
     listKind: CassandraList
     plural: cassandras
     singular: cassandra
-  scope: ""
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Cassandra is the Schema for the cassandras API.
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: CassandraSpec is the Spec for the cassandras API.
-          properties:
-            commonConfiguration:
-              description: CommonConfiguration is the common services struct.
-              properties:
-                activate:
-                  description: Activate defines if the service will be activated by
-                    Manager.
-                  type: boolean
-                create:
-                  description: Create defines if the service will be created by Manager.
-                  type: boolean
-                hostNetwork:
-                  description: Host networking requested for this pod. Use the host's
-                    network namespace. If this option is set, the ports that will
-                    be used must be specified. Default to false.
-                  type: boolean
-                imagePullSecrets:
-                  description: ImagePullSecrets is an optional list of references
-                    to secrets in the same namespace to use for pulling any of the
-                    images used by this PodSpec.
-                  items:
-                    type: string
-                  type: array
-                nodeSelector:
-                  additionalProperties:
-                    type: string
-                  description: 'NodeSelector is a selector which must be true for
-                    the pod to fit on a node. Selector which must match a node''s
-                    labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
-                  type: object
-                replicas:
-                  description: Number of desired pods. This is a pointer to distinguish
-                    between explicit zero and not specified. Defaults to 1.
-                  format: int32
-                  type: integer
-                tolerations:
-                  description: If specified, the pod's tolerations.
-                  items:
-                    description: The pod this Toleration is attached to tolerates
-                      any taint that matches the triple <key,value,effect> using the
-                      matching operator <operator>.
-                    properties:
-                      effect:
-                        description: Effect indicates the taint effect to match. Empty
-                          means match all taint effects. When specified, allowed values
-                          are NoSchedule, PreferNoSchedule and NoExecute.
-                        type: string
-                      key:
-                        description: Key is the taint key that the toleration applies
-                          to. Empty means match all taint keys. If the key is empty,
-                          operator must be Exists; this combination means to match
-                          all values and all keys.
-                        type: string
-                      operator:
-                        description: Operator represents a key's relationship to the
-                          value. Valid operators are Exists and Equal. Defaults to
-                          Equal. Exists is equivalent to wildcard for value, so that
-                          a pod can tolerate all taints of a particular category.
-                        type: string
-                      tolerationSeconds:
-                        description: TolerationSeconds represents the period of time
-                          the toleration (which must be of effect NoExecute, otherwise
-                          this field is ignored) tolerates the taint. By default,
-                          it is not set, which means tolerate the taint forever (do
-                          not evict). Zero and negative values will be treated as
-                          0 (evict immediately) by the system.
-                        format: int64
-                        type: integer
-                      value:
-                        description: Value is the taint value the toleration matches
-                          to. If the operator is Exists, the value should be empty,
-                          otherwise just a regular string.
-                        type: string
-                    type: object
-                  type: array
-              type: object
-            serviceConfiguration:
-              description: CassandraConfiguration is the Spec for the cassandras API.
-              properties:
-                clusterName:
-                  type: string
-                containers: {}
-                cqlPort:
-                  type: integer
-                jmxLocalPort:
-                  type: integer
-                listenAddress:
-                  type: string
-                maxHeapSize:
-                  type: string
-                minHeapSize:
-                  type: string
-                port:
-                  type: integer
-                sslStoragePort:
-                  type: integer
-                startRPC:
-                  type: boolean
-                storagePath:
-                  type: string
-                storagePort:
-                  type: integer
-                storageSize:
-                  type: string
-              type: object
-          required:
-          - commonConfiguration
-          - serviceConfiguration
-          type: object
-        status:
-          description: CassandraStatus defines the status of the cassandra object.
-          properties:
-            active:
-              type: boolean
-            nodes:
-              additionalProperties:
-                type: string
-              type: object
-            ports:
-              description: CassandraStatusPorts defines the status of the ports of
-                the cassandra object.
-              properties:
-                cqlPort:
-                  type: string
-                jmxPort:
-                  type: string
-                port:
-                  type: string
-              type: object
-          type: object
-      type: object
-  version: v1alpha1
+  scope: Namespaced
   versions:
   - name: v1alpha1
+    schema:
+      x-preserve-unknown-fields: true
+      openAPIV3Schema:
+        description: Cassandra is the Schema for the cassandras API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CassandraSpec is the Spec for the cassandras API.
+            properties:
+              commonConfiguration:
+                description: CommonConfiguration is the common services struct.
+                properties:
+                  activate:
+                    description: Activate defines if the service will be activated
+                      by Manager.
+                    type: boolean
+                  create:
+                    description: Create defines if the service will be created by
+                      Manager.
+                    type: boolean
+                  hostNetwork:
+                    description: Host networking requested for this pod. Use the host's
+                      network namespace. If this option is set, the ports that will
+                      be used must be specified. Default to false.
+                    type: boolean
+                  imagePullSecrets:
+                    description: ImagePullSecrets is an optional list of references
+                      to secrets in the same namespace to use for pulling any of the
+                      images used by this PodSpec.
+                    items:
+                      type: string
+                    type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    description: 'NodeSelector is a selector which must be true for
+                      the pod to fit on a node. Selector which must match a node''s
+                      labels for the pod to be scheduled on that node. More info:
+                      https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
+                    type: object
+                  replicas:
+                    description: Number of desired pods. This is a pointer to distinguish
+                      between explicit zero and not specified. Defaults to 1.
+                    format: int32
+                    type: integer
+                  tolerations:
+                    description: If specified, the pod's tolerations.
+                    items:
+                      description: The pod this Toleration is attached to tolerates
+                        any taint that matches the triple <key,value,effect> using
+                        the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: Effect indicates the taint effect to match.
+                            Empty means match all taint effects. When specified, allowed
+                            values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: Key is the taint key that the toleration applies
+                            to. Empty means match all taint keys. If the key is empty,
+                            operator must be Exists; this combination means to match
+                            all values and all keys.
+                          type: string
+                        operator:
+                          description: Operator represents a key's relationship to
+                            the value. Valid operators are Exists and Equal. Defaults
+                            to Equal. Exists is equivalent to wildcard for value,
+                            so that a pod can tolerate all taints of a particular
+                            category.
+                          type: string
+                        tolerationSeconds:
+                          description: TolerationSeconds represents the period of
+                            time the toleration (which must be of effect NoExecute,
+                            otherwise this field is ignored) tolerates the taint.
+                            By default, it is not set, which means tolerate the taint
+                            forever (do not evict). Zero and negative values will
+                            be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: Value is the taint value the toleration matches
+                            to. If the operator is Exists, the value should be empty,
+                            otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              serviceConfiguration:
+                description: CassandraConfiguration is the Spec for the cassandras
+                  API.
+                properties:
+                  clusterName:
+                    type: string
+                  containers:
+                    type: object
+                  cqlPort:
+                    type: integer
+                  jmxLocalPort:
+                    type: integer
+                  listenAddress:
+                    type: string
+                  maxHeapSize:
+                    type: string
+                  minHeapSize:
+                    type: string
+                  port:
+                    type: integer
+                  sslStoragePort:
+                    type: integer
+                  startRPC:
+                    type: boolean
+                  storagePath:
+                    type: string
+                  storagePort:
+                    type: integer
+                  storageSize:
+                    type: string
+                type: object
+            required:
+            - commonConfiguration
+            - serviceConfiguration
+            type: object
+          status:
+            description: CassandraStatus defines the status of the cassandra object.
+            properties:
+              active:
+                type: boolean
+              nodes:
+                additionalProperties:
+                  type: string
+                type: object
+              ports:
+                description: CassandraStatusPorts defines the status of the ports
+                  of the cassandra object.
+                properties:
+                  cqlPort:
+                    type: string
+                  jmxPort:
+                    type: string
+                  port:
+                    type: string
+                type: object
+            type: object
+        type: object
     served: true
-    storage: true`
+    storage: true
+    subresources:
+      status: {}`
 
 var crdConfig = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: configs.contrail.juniper.net
 spec:
+  conversion:
+    strategy: None
   group: contrail.juniper.net
   names:
     kind: Config
     listKind: ConfigList
     plural: configs
     singular: config
-  scope: ""
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Config is the Schema for the configs API.
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: ConfigSpec is the Spec for the cassandras API.
-          properties:
-            commonConfiguration:
-              description: CommonConfiguration is the common services struct.
-              properties:
-                activate:
-                  description: Activate defines if the service will be activated by
-                    Manager.
-                  type: boolean
-                create:
-                  description: Create defines if the service will be created by Manager.
-                  type: boolean
-                hostNetwork:
-                  description: Host networking requested for this pod. Use the host's
-                    network namespace. If this option is set, the ports that will
-                    be used must be specified. Default to false.
-                  type: boolean
-                imagePullSecrets:
-                  description: ImagePullSecrets is an optional list of references
-                    to secrets in the same namespace to use for pulling any of the
-                    images used by this PodSpec.
-                  items:
-                    type: string
-                  type: array
-                nodeSelector:
-                  additionalProperties:
-                    type: string
-                  description: 'NodeSelector is a selector which must be true for
-                    the pod to fit on a node. Selector which must match a node''s
-                    labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
-                  type: object
-                replicas:
-                  description: Number of desired pods. This is a pointer to distinguish
-                    between explicit zero and not specified. Defaults to 1.
-                  format: int32
-                  type: integer
-                tolerations:
-                  description: If specified, the pod's tolerations.
-                  items:
-                    description: The pod this Toleration is attached to tolerates
-                      any taint that matches the triple <key,value,effect> using the
-                      matching operator <operator>.
-                    properties:
-                      effect:
-                        description: Effect indicates the taint effect to match. Empty
-                          means match all taint effects. When specified, allowed values
-                          are NoSchedule, PreferNoSchedule and NoExecute.
-                        type: string
-                      key:
-                        description: Key is the taint key that the toleration applies
-                          to. Empty means match all taint keys. If the key is empty,
-                          operator must be Exists; this combination means to match
-                          all values and all keys.
-                        type: string
-                      operator:
-                        description: Operator represents a key's relationship to the
-                          value. Valid operators are Exists and Equal. Defaults to
-                          Equal. Exists is equivalent to wildcard for value, so that
-                          a pod can tolerate all taints of a particular category.
-                        type: string
-                      tolerationSeconds:
-                        description: TolerationSeconds represents the period of time
-                          the toleration (which must be of effect NoExecute, otherwise
-                          this field is ignored) tolerates the taint. By default,
-                          it is not set, which means tolerate the taint forever (do
-                          not evict). Zero and negative values will be treated as
-                          0 (evict immediately) by the system.
-                        format: int64
-                        type: integer
-                      value:
-                        description: Value is the taint value the toleration matches
-                          to. If the operator is Exists, the value should be empty,
-                          otherwise just a regular string.
-                        type: string
-                    type: object
-                  type: array
-              type: object
-            serviceConfiguration:
-              description: ConfigConfiguration is the Spec for the cassandras API.
-              properties:
-                analyticsPort:
-                  type: integer
-                apiPort:
-                  type: integer
-                cassandraInstance:
-                  type: string
-                collectorPort:
-                  type: integer
-                containers: {}
-                nodeManager:
-                  type: boolean
-                rabbitmqPassword:
-                  type: string
-                rabbitmqUser:
-                  type: string
-                rabbitmqVhost:
-                  type: string
-                redisPort:
-                  type: integer
-                zookeeperInstance:
-                  type: string
-              type: object
-          required:
-          - commonConfiguration
-          - serviceConfiguration
-          type: object
-        status:
-          properties:
-            active:
-              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                of cluster Important: Run "operator-sdk generate k8s" to regenerate
-                code after modifying this file Add custom validation using kubebuilder
-                tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html'
-              type: boolean
-            configChanged:
-              type: boolean
-            nodes:
-              additionalProperties:
-                type: string
-              type: object
-            ports:
-              properties:
-                analyticsPort:
-                  type: string
-                apiPort:
-                  type: string
-                collectorPort:
-                  type: string
-                redisPort:
-                  type: string
-              type: object
-          type: object
-      type: object
-  version: v1alpha1
+  scope: Namespaced
   versions:
   - name: v1alpha1
+    schema:
+      x-preserve-unknown-fields: true
+      openAPIV3Schema:
+        description: Config is the Schema for the configs API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ConfigSpec is the Spec for the cassandras API.
+            properties:
+              commonConfiguration:
+                description: CommonConfiguration is the common services struct.
+                properties:
+                  activate:
+                    description: Activate defines if the service will be activated
+                      by Manager.
+                    type: boolean
+                  create:
+                    description: Create defines if the service will be created by
+                      Manager.
+                    type: boolean
+                  hostNetwork:
+                    description: Host networking requested for this pod. Use the host's
+                      network namespace. If this option is set, the ports that will
+                      be used must be specified. Default to false.
+                    type: boolean
+                  imagePullSecrets:
+                    description: ImagePullSecrets is an optional list of references
+                      to secrets in the same namespace to use for pulling any of the
+                      images used by this PodSpec.
+                    items:
+                      type: string
+                    type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    description: 'NodeSelector is a selector which must be true for
+                      the pod to fit on a node. Selector which must match a node''s
+                      labels for the pod to be scheduled on that node. More info:
+                      https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
+                    type: object
+                  replicas:
+                    description: Number of desired pods. This is a pointer to distinguish
+                      between explicit zero and not specified. Defaults to 1.
+                    format: int32
+                    type: integer
+                  tolerations:
+                    description: If specified, the pod's tolerations.
+                    items:
+                      description: The pod this Toleration is attached to tolerates
+                        any taint that matches the triple <key,value,effect> using
+                        the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: Effect indicates the taint effect to match.
+                            Empty means match all taint effects. When specified, allowed
+                            values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: Key is the taint key that the toleration applies
+                            to. Empty means match all taint keys. If the key is empty,
+                            operator must be Exists; this combination means to match
+                            all values and all keys.
+                          type: string
+                        operator:
+                          description: Operator represents a key's relationship to
+                            the value. Valid operators are Exists and Equal. Defaults
+                            to Equal. Exists is equivalent to wildcard for value,
+                            so that a pod can tolerate all taints of a particular
+                            category.
+                          type: string
+                        tolerationSeconds:
+                          description: TolerationSeconds represents the period of
+                            time the toleration (which must be of effect NoExecute,
+                            otherwise this field is ignored) tolerates the taint.
+                            By default, it is not set, which means tolerate the taint
+                            forever (do not evict). Zero and negative values will
+                            be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: Value is the taint value the toleration matches
+                            to. If the operator is Exists, the value should be empty,
+                            otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              serviceConfiguration:
+                description: ConfigConfiguration is the Spec for the cassandras API.
+                properties:
+                  analyticsPort:
+                    type: integer
+                  apiPort:
+                    type: integer
+                  cassandraInstance:
+                    type: string
+                  collectorPort:
+                    type: integer
+                  containers:
+                    type: object
+                  nodeManager:
+                    type: boolean
+                  rabbitmqPassword:
+                    type: string
+                  rabbitmqUser:
+                    type: string
+                  rabbitmqVhost:
+                    type: string
+                  redisPort:
+                    type: integer
+                  zookeeperInstance:
+                    type: string
+                type: object
+            required:
+            - commonConfiguration
+            - serviceConfiguration
+            type: object
+          status:
+            properties:
+              active:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "operator-sdk generate k8s" to regenerate
+                  code after modifying this file Add custom validation using kubebuilder
+                  tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html'
+                type: boolean
+              configChanged:
+                type: boolean
+              nodes:
+                additionalProperties:
+                  type: string
+                type: object
+              ports:
+                properties:
+                  analyticsPort:
+                    type: string
+                  apiPort:
+                    type: string
+                  collectorPort:
+                    type: string
+                  redisPort:
+                    type: string
+                type: object
+            type: object
+        type: object
     served: true
-    storage: true`
+    storage: true
+    subresources:
+      status: {}`
 
 var crdControl = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: controls.contrail.juniper.net
 spec:
+  conversion:
+    strategy: None
   group: contrail.juniper.net
   names:
     kind: Control
     listKind: ControlList
     plural: controls
     singular: control
-  scope: ""
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Control is the Schema for the controls API.
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: ControlSpec is the Spec for the controls API.
-          properties:
-            commonConfiguration:
-              description: CommonConfiguration is the common services struct.
-              properties:
-                activate:
-                  description: Activate defines if the service will be activated by
-                    Manager.
-                  type: boolean
-                create:
-                  description: Create defines if the service will be created by Manager.
-                  type: boolean
-                hostNetwork:
-                  description: Host networking requested for this pod. Use the host's
-                    network namespace. If this option is set, the ports that will
-                    be used must be specified. Default to false.
-                  type: boolean
-                imagePullSecrets:
-                  description: ImagePullSecrets is an optional list of references
-                    to secrets in the same namespace to use for pulling any of the
-                    images used by this PodSpec.
-                  items:
-                    type: string
-                  type: array
-                nodeSelector:
-                  additionalProperties:
-                    type: string
-                  description: 'NodeSelector is a selector which must be true for
-                    the pod to fit on a node. Selector which must match a node''s
-                    labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
-                  type: object
-                replicas:
-                  description: Number of desired pods. This is a pointer to distinguish
-                    between explicit zero and not specified. Defaults to 1.
-                  format: int32
-                  type: integer
-                tolerations:
-                  description: If specified, the pod's tolerations.
-                  items:
-                    description: The pod this Toleration is attached to tolerates
-                      any taint that matches the triple <key,value,effect> using the
-                      matching operator <operator>.
-                    properties:
-                      effect:
-                        description: Effect indicates the taint effect to match. Empty
-                          means match all taint effects. When specified, allowed values
-                          are NoSchedule, PreferNoSchedule and NoExecute.
-                        type: string
-                      key:
-                        description: Key is the taint key that the toleration applies
-                          to. Empty means match all taint keys. If the key is empty,
-                          operator must be Exists; this combination means to match
-                          all values and all keys.
-                        type: string
-                      operator:
-                        description: Operator represents a key's relationship to the
-                          value. Valid operators are Exists and Equal. Defaults to
-                          Equal. Exists is equivalent to wildcard for value, so that
-                          a pod can tolerate all taints of a particular category.
-                        type: string
-                      tolerationSeconds:
-                        description: TolerationSeconds represents the period of time
-                          the toleration (which must be of effect NoExecute, otherwise
-                          this field is ignored) tolerates the taint. By default,
-                          it is not set, which means tolerate the taint forever (do
-                          not evict). Zero and negative values will be treated as
-                          0 (evict immediately) by the system.
-                        format: int64
-                        type: integer
-                      value:
-                        description: Value is the taint value the toleration matches
-                          to. If the operator is Exists, the value should be empty,
-                          otherwise just a regular string.
-                        type: string
-                    type: object
-                  type: array
-              type: object
-            serviceConfiguration:
-              description: ControlConfiguration is the Spec for the controls API.
-              properties:
-                asnNumber:
-                  type: integer
-                bgpPort:
-                  type: integer
-                cassandraInstance:
-                  type: string
-                containers: {}
-                dnsIntrospectPort:
-                  type: integer
-                dnsPort:
-                  type: integer
-                nodeManager:
-                  type: boolean
-                rabbitmqPassword:
-                  type: string
-                rabbitmqUser:
-                  type: string
-                rabbitmqVhost:
-                  type: string
-                xmppPort:
-                  type: integer
-                zookeeperInstance:
-                  type: string
-              type: object
-          required:
-          - commonConfiguration
-          - serviceConfiguration
-          type: object
-        status:
-          properties:
-            active:
-              type: boolean
-            nodes:
-              additionalProperties:
-                type: string
-              type: object
-            ports:
-              properties:
-                asnNumber:
-                  type: string
-                bgpPort:
-                  type: string
-                dnsIntrospectPort:
-                  type: string
-                dnsPort:
-                  type: string
-                xmppPort:
-                  type: string
-              type: object
-            serviceStatus:
-              additionalProperties:
-                type: object
-              type: object
-          type: object
-      type: object
-  version: v1alpha1
+  scope: Namespaced
   versions:
   - name: v1alpha1
+    schema:
+      x-preserve-unknown-fields: true
+      openAPIV3Schema:
+        description: Control is the Schema for the controls API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ControlSpec is the Spec for the controls API.
+            properties:
+              commonConfiguration:
+                description: CommonConfiguration is the common services struct.
+                properties:
+                  activate:
+                    description: Activate defines if the service will be activated
+                      by Manager.
+                    type: boolean
+                  create:
+                    description: Create defines if the service will be created by
+                      Manager.
+                    type: boolean
+                  hostNetwork:
+                    description: Host networking requested for this pod. Use the host's
+                      network namespace. If this option is set, the ports that will
+                      be used must be specified. Default to false.
+                    type: boolean
+                  imagePullSecrets:
+                    description: ImagePullSecrets is an optional list of references
+                      to secrets in the same namespace to use for pulling any of the
+                      images used by this PodSpec.
+                    items:
+                      type: string
+                    type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    description: 'NodeSelector is a selector which must be true for
+                      the pod to fit on a node. Selector which must match a node''s
+                      labels for the pod to be scheduled on that node. More info:
+                      https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
+                    type: object
+                  replicas:
+                    description: Number of desired pods. This is a pointer to distinguish
+                      between explicit zero and not specified. Defaults to 1.
+                    format: int32
+                    type: integer
+                  tolerations:
+                    description: If specified, the pod's tolerations.
+                    items:
+                      description: The pod this Toleration is attached to tolerates
+                        any taint that matches the triple <key,value,effect> using
+                        the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: Effect indicates the taint effect to match.
+                            Empty means match all taint effects. When specified, allowed
+                            values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: Key is the taint key that the toleration applies
+                            to. Empty means match all taint keys. If the key is empty,
+                            operator must be Exists; this combination means to match
+                            all values and all keys.
+                          type: string
+                        operator:
+                          description: Operator represents a key's relationship to
+                            the value. Valid operators are Exists and Equal. Defaults
+                            to Equal. Exists is equivalent to wildcard for value,
+                            so that a pod can tolerate all taints of a particular
+                            category.
+                          type: string
+                        tolerationSeconds:
+                          description: TolerationSeconds represents the period of
+                            time the toleration (which must be of effect NoExecute,
+                            otherwise this field is ignored) tolerates the taint.
+                            By default, it is not set, which means tolerate the taint
+                            forever (do not evict). Zero and negative values will
+                            be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: Value is the taint value the toleration matches
+                            to. If the operator is Exists, the value should be empty,
+                            otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              serviceConfiguration:
+                description: ControlConfiguration is the Spec for the controls API.
+                properties:
+                  asnNumber:
+                    type: integer
+                  bgpPort:
+                    type: integer
+                  cassandraInstance:
+                    type: string
+                  containers:
+                    type: object
+                  dnsIntrospectPort:
+                    type: integer
+                  dnsPort:
+                    type: integer
+                  nodeManager:
+                    type: boolean
+                  rabbitmqPassword:
+                    type: string
+                  rabbitmqUser:
+                    type: string
+                  rabbitmqVhost:
+                    type: string
+                  xmppPort:
+                    type: integer
+                  zookeeperInstance:
+                    type: string
+                type: object
+            required:
+            - commonConfiguration
+            - serviceConfiguration
+            type: object
+          status:
+            properties:
+              active:
+                type: boolean
+              nodes:
+                additionalProperties:
+                  type: string
+                type: object
+              ports:
+                properties:
+                  asnNumber:
+                    type: string
+                  bgpPort:
+                    type: string
+                  dnsIntrospectPort:
+                    type: string
+                  dnsPort:
+                    type: string
+                  xmppPort:
+                    type: string
+                type: object
+              serviceStatus:
+                additionalProperties:
+                  type: object
+                type: object
+            type: object
+        type: object
     served: true
-    storage: true`
+    storage: true
+    subresources:
+      status: {}`
 
 var crdKubemanager = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: kubemanagers.contrail.juniper.net
 spec:
+  conversion:
+    strategy: None
   group: contrail.juniper.net
   names:
     kind: Kubemanager
     listKind: KubemanagerList
     plural: kubemanagers
     singular: kubemanager
-  scope: ""
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Kubemanager is the Schema for the kubemanagers API.
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: KubemanagerSpec is the Spec for the kubemanagers API.
-          properties:
-            commonConfiguration:
-              description: CommonConfiguration is the common services struct.
-              properties:
-                activate:
-                  description: Activate defines if the service will be activated by
-                    Manager.
-                  type: boolean
-                create:
-                  description: Create defines if the service will be created by Manager.
-                  type: boolean
-                hostNetwork:
-                  description: Host networking requested for this pod. Use the host's
-                    network namespace. If this option is set, the ports that will
-                    be used must be specified. Default to false.
-                  type: boolean
-                imagePullSecrets:
-                  description: ImagePullSecrets is an optional list of references
-                    to secrets in the same namespace to use for pulling any of the
-                    images used by this PodSpec.
-                  items:
-                    type: string
-                  type: array
-                nodeSelector:
-                  additionalProperties:
-                    type: string
-                  description: 'NodeSelector is a selector which must be true for
-                    the pod to fit on a node. Selector which must match a node''s
-                    labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
-                  type: object
-                replicas:
-                  description: Number of desired pods. This is a pointer to distinguish
-                    between explicit zero and not specified. Defaults to 1.
-                  format: int32
-                  type: integer
-                tolerations:
-                  description: If specified, the pod's tolerations.
-                  items:
-                    description: The pod this Toleration is attached to tolerates
-                      any taint that matches the triple <key,value,effect> using the
-                      matching operator <operator>.
-                    properties:
-                      effect:
-                        description: Effect indicates the taint effect to match. Empty
-                          means match all taint effects. When specified, allowed values
-                          are NoSchedule, PreferNoSchedule and NoExecute.
-                        type: string
-                      key:
-                        description: Key is the taint key that the toleration applies
-                          to. Empty means match all taint keys. If the key is empty,
-                          operator must be Exists; this combination means to match
-                          all values and all keys.
-                        type: string
-                      operator:
-                        description: Operator represents a key's relationship to the
-                          value. Valid operators are Exists and Equal. Defaults to
-                          Equal. Exists is equivalent to wildcard for value, so that
-                          a pod can tolerate all taints of a particular category.
-                        type: string
-                      tolerationSeconds:
-                        description: TolerationSeconds represents the period of time
-                          the toleration (which must be of effect NoExecute, otherwise
-                          this field is ignored) tolerates the taint. By default,
-                          it is not set, which means tolerate the taint forever (do
-                          not evict). Zero and negative values will be treated as
-                          0 (evict immediately) by the system.
-                        format: int64
-                        type: integer
-                      value:
-                        description: Value is the taint value the toleration matches
-                          to. If the operator is Exists, the value should be empty,
-                          otherwise just a regular string.
-                        type: string
-                    type: object
-                  type: array
-              type: object
-            serviceConfiguration:
-              description: KubemanagerConfiguration is the Spec for the kubemanagers
-                API.
-              properties:
-                cassandraInstance:
-                  type: string
-                cloudOrchestrator:
-                  type: string
-                clusterRole:
-                  type: string
-                clusterRoleBinding:
-                  type: string
-                containers: {}
-                hostNetworkService:
-                  type: boolean
-                ipFabricForwarding:
-                  type: boolean
-                ipFabricSnat:
-                  type: boolean
-                ipFabricSubnets:
-                  type: string
-                kubernetesAPIPort:
-                  type: integer
-                kubernetesAPISSLPort:
-                  type: integer
-                kubernetesAPIServer:
-                  type: string
-                kubernetesClusterName:
-                  type: string
-                kubernetesTokenFile:
-                  type: string
-                podSubnets:
-                  type: string
-                rabbitmqPassword:
-                  type: string
-                rabbitmqUser:
-                  type: string
-                rabbitmqVhost:
-                  type: string
-                serviceAccount:
-                  type: string
-                serviceSubnets:
-                  type: string
-                useKubeadmConfig:
-                  type: boolean
-                zookeeperInstance:
-                  type: string
-              type: object
-          required:
-          - commonConfiguration
-          - serviceConfiguration
-          type: object
-        status:
-          properties:
-            active:
-              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                of cluster Important: Run "operator-sdk generate k8s" to regenerate
-                code after modifying this file Add custom validation using kubebuilder
-                tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html'
-              type: boolean
-            configChanged:
-              type: boolean
-            nodes:
-              additionalProperties:
-                type: string
-              type: object
-          type: object
-      type: object
-  version: v1alpha1
+  scope: Namespaced
   versions:
   - name: v1alpha1
+    schema:
+      x-preserve-unknown-fields: true
+      openAPIV3Schema:
+        description: Kubemanager is the Schema for the kubemanagers API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KubemanagerSpec is the Spec for the kubemanagers API.
+            properties:
+              commonConfiguration:
+                description: CommonConfiguration is the common services struct.
+                properties:
+                  activate:
+                    description: Activate defines if the service will be activated
+                      by Manager.
+                    type: boolean
+                  create:
+                    description: Create defines if the service will be created by
+                      Manager.
+                    type: boolean
+                  hostNetwork:
+                    description: Host networking requested for this pod. Use the host's
+                      network namespace. If this option is set, the ports that will
+                      be used must be specified. Default to false.
+                    type: boolean
+                  imagePullSecrets:
+                    description: ImagePullSecrets is an optional list of references
+                      to secrets in the same namespace to use for pulling any of the
+                      images used by this PodSpec.
+                    items:
+                      type: string
+                    type: array
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    description: 'NodeSelector is a selector which must be true for
+                      the pod to fit on a node. Selector which must match a node''s
+                      labels for the pod to be scheduled on that node. More info:
+                      https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.'
+                    type: object
+                  replicas:
+                    description: Number of desired pods. This is a pointer to distinguish
+                      between explicit zero and not specified. Defaults to 1.
+                    format: int32
+                    type: integer
+                  tolerations:
+                    description: If specified, the pod's tolerations.
+                    items:
+                      description: The pod this Toleration is attached to tolerates
+                        any taint that matches the triple <key,value,effect> using
+                        the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: Effect indicates the taint effect to match.
+                            Empty means match all taint effects. When specified, allowed
+                            values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: Key is the taint key that the toleration applies
+                            to. Empty means match all taint keys. If the key is empty,
+                            operator must be Exists; this combination means to match
+                            all values and all keys.
+                          type: string
+                        operator:
+                          description: Operator represents a key's relationship to
+                            the value. Valid operators are Exists and Equal. Defaults
+                            to Equal. Exists is equivalent to wildcard for value,
+                            so that a pod can tolerate all taints of a particular
+                            category.
+                          type: string
+                        tolerationSeconds:
+                          description: TolerationSeconds represents the period of
+                            time the toleration (which must be of effect NoExecute,
+                            otherwise this field is ignored) tolerates the taint.
+                            By default, it is not set, which means tolerate the taint
+                            forever (do not evict). Zero and negative values will
+                            be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: Value is the taint value the toleration matches
+                            to. If the operator is Exists, the value should be empty,
+                            otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              serviceConfiguration:
+                description: KubemanagerConfiguration is the Spec for the kubemanagers
+                  API.
+                properties:
+                  cassandraInstance:
+                    type: string
+                  cloudOrchestrator:
+                    type: string
+                  clusterRole:
+                    type: string
+                  clusterRoleBinding:
+                    type: string
+                  containers:
+                    type: object
+                  hostNetworkService:
+                    type: boolean
+                  ipFabricForwarding:
+                    type: boolean
+                  ipFabricSnat:
+                    type: boolean
+                  ipFabricSubnets:
+                    type: string
+                  kubernetesAPIPort:
+                    type: integer
+                  kubernetesAPISSLPort:
+                    type: integer
+                  kubernetesAPIServer:
+                    type: string
+                  kubernetesClusterName:
+                    type: string
+                  kubernetesTokenFile:
+                    type: string
+                  podSubnets:
+                    type: string
+                  rabbitmqPassword:
+                    type: string
+                  rabbitmqUser:
+                    type: string
+                  rabbitmqVhost:
+                    type: string
+                  serviceAccount:
+                    type: string
+                  serviceSubnets:
+                    type: string
+                  useKubeadmConfig:
+                    type: boolean
+                  zookeeperInstance:
+                    type: string
+                type: object
+            required:
+            - commonConfiguration
+            - serviceConfiguration
+            type: object
+          status:
+            properties:
+              active:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "operator-sdk generate k8s" to regenerate
+                  code after modifying this file Add custom validation using kubebuilder
+                  tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html'
+                type: boolean
+              configChanged:
+                type: boolean
+              nodes:
+                additionalProperties:
+                  type: string
+                type: object
+            type: object
+        type: object
     served: true
-    storage: true`
+    storage: true
+    subresources:
+      status: {}`
 
 var crdManager = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1124,7 +1211,7 @@ spec:
     listKind: ManagerList
     plural: managers
     singular: manager
-  scope: ""
+  scope: Namespaced
   subresources:
     status: {}
   validation:
@@ -2943,7 +3030,7 @@ spec:
     listKind: RabbitmqList
     plural: rabbitmqs
     singular: rabbitmq
-  scope: ""
+  scope: Namespaced
   subresources:
     status: {}
   validation:
@@ -3103,7 +3190,7 @@ spec:
     listKind: VrouterList
     plural: vrouters
     singular: vrouter
-  scope: ""
+  scope: Namespaced
   subresources:
     status: {}
   validation:
@@ -3271,7 +3358,7 @@ spec:
     listKind: WebuiList
     plural: webuis
     singular: webui
-  scope: ""
+  scope: Namespaced
   subresources:
     status: {}
   validation:
@@ -3403,7 +3490,7 @@ spec:
   versions:
   - name: v1alpha1
     served: true
-	storage: true`
+    storage: true`
 
 var crdZookeeper = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -3416,7 +3503,7 @@ spec:
     listKind: ZookeeperList
     plural: zookeepers
     singular: zookeeper
-  scope: ""
+  scope: Namespaced
   subresources:
     status: {}
   validation:

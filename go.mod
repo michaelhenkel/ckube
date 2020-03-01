@@ -30,6 +30,7 @@ require (
 	github.com/googleapis/gax-go v0.0.0-20170305230405-8c5154c0fe5b // indirect
 	github.com/gophercloud/utils v0.0.0-20181029231510-34f5991525d1 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
+	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936 // indirect
 	github.com/moby/datakit v0.0.0-20170703142523-97b3d2305353 // indirect
