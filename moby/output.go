@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/linuxkit/linuxkit/src/cmd/linuxkit/initrd"
+	"github.com/michaelhenkel/ckube/initrd"
 	log "github.com/sirupsen/logrus"
 )
 

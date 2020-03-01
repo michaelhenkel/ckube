@@ -236,14 +236,17 @@ func getAuth(cli *client.Client, refStr string) string {
 		return val
 	}
 
-	authConfig, err := configFile.GetAuthConfig(hostname)
+	/*authConfig, err := configFile.GetAuthConfig(hostname)
 	if err != nil {
 		log.Debugf("Failed to get authentication config for %s. Ignoring: %v", hostname, err)
 		return ""
 	}
 	log.Debugf("Looked up credentials for %s", hostname)
+	*/
 
-	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	var authConfig2 types.AuthConfig
+
+	encodedAuth, err := command.EncodeAuthToBase64(authConfig2)
 	if err != nil {
 		return ""
 	}

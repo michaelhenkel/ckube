@@ -1,42 +1,59 @@
-module github.com/Juniper/contrail-operator
+module github.com/michaelhenkel/ckube
 
 go 1.13
 
-//github.com/Juniper/contrail-go-api v1.1.0
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
-	github.com/Microsoft/go-winio v0.4.12
-	github.com/containerd/cgroups v0.0.0-20200226104544-44306b6a1d46 // indirect
+	github.com/Azure/go-autorest v8.0.0+incompatible // indirect
+	github.com/Juniper/contrail-operator v0.0.0-20200122001444-1b19a3665b33
+	github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
+	github.com/Microsoft/hcsshim v0.8.7 // indirect
+	github.com/ScaleFT/sshkeys v0.0.0-20181112160850-82451a803681 // indirect
+	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
+	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
+	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/containerd/containerd v1.3.0
-	github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00 // indirect
-	github.com/containerd/ttrpc v0.0.0-20200121165050-0be804eadb15 // indirect
-	github.com/docker/cli v0.0.0-20190506213505-d88565df0c2d
+	github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d // indirect
+	github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a // indirect
+	github.com/docker/cli v0.0.0-20200227165822-2298e6a3fe24
 	github.com/docker/compose-on-kubernetes v0.4.24 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.4.2-0.20181221150755-2cb26cfe9cbf
-	github.com/docker/go v1.5.1-1 // indirect
+	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
-	github.com/docker/go-p9p v0.0.0-20191112112554-37d97cf40d03 // indirect
+	github.com/docker/go-p9p v0.0.0-20170223181108-87ae8514a3a2 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/go-ini/ini v1.27.3-0.20170519023713-afbc45e87f3b // indirect
+	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/gogo/googleapis v1.3.2 // indirect
 	github.com/google/uuid v1.1.1
-	github.com/jinzhu/gorm v1.9.12 // indirect
-	github.com/linuxkit/linuxkit v0.0.0-20200225232921-a2617fbd3900
-	github.com/linuxkit/virtsock v0.0.0-20180830132707-8e79449dea07 // indirect
+	github.com/googleapis/gax-go v0.0.0-20170305230405-8c5154c0fe5b // indirect
+	github.com/gophercloud/utils v0.0.0-20181029231510-34f5991525d1 // indirect
+	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
-	github.com/mitchellh/go-ps v1.0.0 // indirect
-	github.com/moby/datakit v1.0.0 // indirect
-	github.com/moby/hyperkit v0.0.0-20200220134618-908930c70f97
-	github.com/moby/vpnkit v0.3.0
+	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936 // indirect
+	github.com/moby/datakit v0.0.0-20170703142523-97b3d2305353 // indirect
+	github.com/moby/hyperkit v0.0.0-20180416161519-d65b09c1c28a
+	github.com/moby/vpnkit v0.1.2-0.20171107134956-0e4293bb1058
+	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/moul/anonuuid v1.1.0 // indirect
+	github.com/moul/gotty-client v1.7.1-0.20180526075433-e5589f6df359 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1
-	github.com/opencontainers/runtime-spec v1.0.0
-	github.com/operator-framework/operator-sdk v0.15.1 // indirect
-	github.com/rn/iso9660wrap v0.0.0-20180101235755-3a04f8ca150a
+	github.com/opencontainers/runc v1.0.0-rc5.0.20180615140650-ad0f5255060d // indirect
+	github.com/opencontainers/runtime-spec v1.0.1
+	github.com/packethost/packngo v0.1.1-0.20171201154433-f1be085ecd6f // indirect
+	github.com/prometheus/client_golang v1.4.1 // indirect
+	github.com/radu-matei/azure-sdk-for-go v5.0.0-beta.0.20161118192335-3b1282355199+incompatible // indirect
+	github.com/radu-matei/azure-vhd-utils v0.0.0-20170531165126-e52754d5569d // indirect
+	github.com/renstrom/fuzzysearch v1.0.1-0.20180302113537-7a8f9a1c4bed // indirect
+	github.com/rn/iso9660wrap v0.0.0-20171120145750-baf8d62ad315
+	github.com/scaleway/scaleway-sdk-go v0.0.0-20190617160902-20b731586975 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
+	github.com/spf13/viper v1.6.2 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/surma/gocpio v1.0.1
-	github.com/theupdateframework/notary v0.6.1
+	github.com/surma/gocpio v1.0.2-0.20160926205914-fcb68777e7dc
+	github.com/theupdateframework/notary v0.6.0
 	github.com/xeipuuv/gojsonschema v1.1.0
 	github.com/zchee/go-vmnet v0.0.0-20161021174912-97ebf9174097
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
@@ -47,11 +64,16 @@ require (
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.8
+	gotest.tools/v3 v3.0.2 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
+	//k8s.io/api v0.17.3 // indirect
+	//k8s.io/client-go v11.0.0+incompatible // indirect
+	//k8s.io/utils v0.0.0-20200229041039-0a110f9eb7ab // indirect
+	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
 
 replace (
@@ -79,5 +101,3 @@ replace (
 )
 
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
-
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad // Required until https://github.com/operator-framework/operator-lifecycle-manager/pull/1241 is resolved

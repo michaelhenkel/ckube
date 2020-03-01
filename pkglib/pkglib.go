@@ -4,14 +4,15 @@ import (
 	"crypto/sha1"
 	"flag"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/linuxkit/linuxkit/src/cmd/linuxkit/moby"
+	"gopkg.in/yaml.v2"
+
+	"github.com/michaelhenkel/ckube/moby"
 )
 
 // Contains fields settable in the build.yml
@@ -69,7 +70,7 @@ func NewFromCLI(fs *flag.FlagSet, args ...string) (Pkg, error) {
 	pi := pkgInfo{
 		Org:                 "linuxkit",
 		Arches:              []string{"amd64", "arm64", "s390x"},
-		GitRepo:             "https://github.com/linuxkit/linuxkit",
+		GitRepo:             "https://github.com/michaelhenkel/ckube",
 		Network:             false,
 		DisableContentTrust: false,
 		DisableCache:        false,

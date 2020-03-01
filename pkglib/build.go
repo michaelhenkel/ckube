@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/linuxkit/linuxkit/src/cmd/linuxkit/version"
+	"github.com/michaelhenkel/ckube/version"
 	log "github.com/sirupsen/logrus"
 )
 

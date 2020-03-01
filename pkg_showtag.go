@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/linuxkit/linuxkit/src/cmd/linuxkit/pkglib"
+	"github.com/michaelhenkel/ckube/pkglib"
 )
 
 func pkgShowTag(args []string) {

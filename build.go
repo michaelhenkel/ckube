@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/linuxkit/linuxkit/src/cmd/linuxkit/moby"
+	"github.com/michaelhenkel/ckube/moby"
 	log "github.com/sirupsen/logrus"
 )
 

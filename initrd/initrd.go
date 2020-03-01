@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/linuxkit/linuxkit/src/cmd/linuxkit/pad4"
-	"github.com/surma/gocpio"
+	"github.com/michaelhenkel/ckube/pad4"
+	cpio "github.com/surma/gocpio"
 )
 
 // Writer is an io.WriteCloser that writes to an initrd
