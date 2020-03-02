@@ -32,10 +32,10 @@ type ZookeeperSpec struct {
 // ZookeeperConfiguration is the Spec for the zookeepers API.
 // +k8s:openapi-gen=true
 type ZookeeperConfiguration struct {
-	Containers   map[string]*Container `json:"containers,omitempty"`
-	ClientPort   *int                  `json:"clientPort,omitempty"`
-	ElectionPort *int                  `json:"electionPort,omitempty"`
-	ServerPort   *int                  `json:"serverPort,omitempty"`
+	Containers   []*Container `json:"containers,omitempty"`
+	ClientPort   *int         `json:"clientPort,omitempty"`
+	ElectionPort *int         `json:"electionPort,omitempty"`
+	ServerPort   *int         `json:"serverPort,omitempty"`
 }
 
 // ZookeeperStatus defines the status of the zookeeper object.
@@ -246,8 +246,8 @@ func (c *Zookeeper) CreateSTS(sts *appsv1.StatefulSet, commonConfiguration *Comm
 }
 
 // UpdateSTS updates the STS.
-func (c *Zookeeper) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string) error {
-	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy)
+func (c *Zookeeper) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string, configChanged *bool) error {
+	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy, configChanged)
 }
 
 // PodIPListAndIPMapFromInstance gets a list with POD IPs and a map of POD names and IPs.

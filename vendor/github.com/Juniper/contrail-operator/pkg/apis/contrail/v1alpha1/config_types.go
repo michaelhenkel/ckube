@@ -46,18 +46,18 @@ type ConfigSpec struct {
 // ConfigConfiguration is the Spec for the cassandras API.
 // +k8s:openapi-gen=true
 type ConfigConfiguration struct {
-	Containers        map[string]*Container `json:"containers,omitempty"`
-	APIPort           *int                  `json:"apiPort,omitempty"`
-	AnalyticsPort     *int                  `json:"analyticsPort,omitempty"`
-	CollectorPort     *int                  `json:"collectorPort,omitempty"`
-	RedisPort         *int                  `json:"redisPort,omitempty"`
-	CassandraInstance string                `json:"cassandraInstance,omitempty"`
-	ZookeeperInstance string                `json:"zookeeperInstance,omitempty"`
-	NodeManager       *bool                 `json:"nodeManager,omitempty"`
-	RabbitmqUser      string                `json:"rabbitmqUser,omitempty"`
-	RabbitmqPassword  string                `json:"rabbitmqPassword,omitempty"`
-	RabbitmqVhost     string                `json:"rabbitmqVhost,omitempty"`
-	LogLevel          string                `json:"logLevel,omitempty"`
+	Containers        []*Container `json:"containers,omitempty"`
+	APIPort           *int         `json:"apiPort,omitempty"`
+	AnalyticsPort     *int         `json:"analyticsPort,omitempty"`
+	CollectorPort     *int         `json:"collectorPort,omitempty"`
+	RedisPort         *int         `json:"redisPort,omitempty"`
+	CassandraInstance string       `json:"cassandraInstance,omitempty"`
+	ZookeeperInstance string       `json:"zookeeperInstance,omitempty"`
+	NodeManager       *bool        `json:"nodeManager,omitempty"`
+	RabbitmqUser      string       `json:"rabbitmqUser,omitempty"`
+	RabbitmqPassword  string       `json:"rabbitmqPassword,omitempty"`
+	RabbitmqVhost     string       `json:"rabbitmqVhost,omitempty"`
+	LogLevel          string       `json:"logLevel,omitempty"`
 }
 
 // +k8s:openapi-gen=true
@@ -458,8 +458,8 @@ func (c *Config) CreateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonC
 }
 
 //UpdateSTS updates the STS
-func (c *Config) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string) error {
-	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy)
+func (c *Config) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string, configChanged *bool) error {
+	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy, configChanged)
 }
 
 // SetInstanceActive sets the Cassandra instance to active

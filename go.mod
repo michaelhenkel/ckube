@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/Azure/go-autorest v8.0.0+incompatible // indirect
-	github.com/Juniper/contrail-operator v0.0.0-20200122001444-1b19a3665b33
+	github.com/Juniper/contrail-operator v0.0.0-20200302052742-1cedd019ec0d
 	github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/ScaleFT/sshkeys v0.0.0-20181112160850-82451a803681 // indirect
@@ -71,9 +71,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
-	//k8s.io/api v0.17.3 // indirect
-	//k8s.io/client-go v11.0.0+incompatible // indirect
-	//k8s.io/utils v0.0.0-20200229041039-0a110f9eb7ab // indirect
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
 

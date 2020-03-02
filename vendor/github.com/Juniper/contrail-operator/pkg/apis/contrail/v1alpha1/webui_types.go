@@ -43,11 +43,11 @@ type WebuiSpec struct {
 // WebuiConfiguration is the Spec for the cassandras API.
 // +k8s:openapi-gen=true
 type WebuiConfiguration struct {
-	Containers         map[string]*Container `json:"containers,omitempty"`
-	CassandraInstance  string                `json:"cassandraInstance,omitempty"`
-	ServiceAccount     string                `json:"serviceAccount,omitempty"`
-	ClusterRole        string                `json:"clusterRole,omitempty"`
-	ClusterRoleBinding string                `json:"clusterRoleBinding,omitempty"`
+	Containers         []*Container `json:"containers,omitempty"`
+	CassandraInstance  string       `json:"cassandraInstance,omitempty"`
+	ServiceAccount     string       `json:"serviceAccount,omitempty"`
+	ClusterRole        string       `json:"clusterRole,omitempty"`
+	ClusterRoleBinding string       `json:"clusterRoleBinding,omitempty"`
 }
 
 // +k8s:openapi-gen=true
@@ -234,8 +234,8 @@ func (c *Webui) CreateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonCo
 }
 
 // UpdateSTS updates the STS.
-func (c *Webui) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string) error {
-	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy)
+func (c *Webui) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string, configChanged *bool) error {
+	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy, configChanged)
 }
 
 // PodIPListAndIPMapFromInstance gets a list with POD IPs and a map of POD names and IPs.

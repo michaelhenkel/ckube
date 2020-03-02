@@ -44,18 +44,18 @@ type ControlSpec struct {
 // ControlConfiguration is the Spec for the controls API.
 // +k8s:openapi-gen=true
 type ControlConfiguration struct {
-	Containers        map[string]*Container `json:"containers,omitempty"`
-	CassandraInstance string                `json:"cassandraInstance,omitempty"`
-	ZookeeperInstance string                `json:"zookeeperInstance,omitempty"`
-	BGPPort           *int                  `json:"bgpPort,omitempty"`
-	ASNNumber         *int                  `json:"asnNumber,omitempty"`
-	XMPPPort          *int                  `json:"xmppPort,omitempty"`
-	DNSPort           *int                  `json:"dnsPort,omitempty"`
-	DNSIntrospectPort *int                  `json:"dnsIntrospectPort,omitempty"`
-	NodeManager       *bool                 `json:"nodeManager,omitempty"`
-	RabbitmqUser      string                `json:"rabbitmqUser,omitempty"`
-	RabbitmqPassword  string                `json:"rabbitmqPassword,omitempty"`
-	RabbitmqVhost     string                `json:"rabbitmqVhost,omitempty"`
+	Containers        []*Container `json:"containers,omitempty"`
+	CassandraInstance string       `json:"cassandraInstance,omitempty"`
+	ZookeeperInstance string       `json:"zookeeperInstance,omitempty"`
+	BGPPort           *int         `json:"bgpPort,omitempty"`
+	ASNNumber         *int         `json:"asnNumber,omitempty"`
+	XMPPPort          *int         `json:"xmppPort,omitempty"`
+	DNSPort           *int         `json:"dnsPort,omitempty"`
+	DNSIntrospectPort *int         `json:"dnsIntrospectPort,omitempty"`
+	NodeManager       *bool        `json:"nodeManager,omitempty"`
+	RabbitmqUser      string       `json:"rabbitmqUser,omitempty"`
+	RabbitmqPassword  string       `json:"rabbitmqPassword,omitempty"`
+	RabbitmqVhost     string       `json:"rabbitmqVhost,omitempty"`
 }
 
 // +k8s:openapi-gen=true
@@ -68,32 +68,32 @@ type ControlStatus struct {
 
 // +k8s:openapi-gen=true
 type ControlServiceStatus struct {
-	Connections              []Connection
-	NumberOfXMPPPeers        string
-	NumberOfRoutingInstances string
-	StaticRoutes             StaticRoutes
-	BGPPeer                  BGPPeer
-	State                    string
+	Connections              []Connection `json:"connections,omitempty"`
+	NumberOfXMPPPeers        string       `json:"numberOfXMPPPeers,omitempty"`
+	NumberOfRoutingInstances string       `json:"numberOfRoutingInstances,omitempty"`
+	StaticRoutes             StaticRoutes `json:"staticRoutes,omitempty"`
+	BGPPeer                  BGPPeer      `json:"bGPPeer,omitempty"`
+	State                    string       `json:"state,omitempty"`
 }
 
 // +k8s:openapi-gen=true
 type StaticRoutes struct {
-	Down   string
-	Number string
+	Down   string `json:"down,omitempty"`
+	Number string `json:"number,omitempty"`
 }
 
 // +k8s:openapi-gen=true
 type BGPPeer struct {
-	Up     string
-	Number string
+	Up     string `json:"up,omitempty"`
+	Number string `json:"number,omitempty"`
 }
 
 // +k8s:openapi-gen=true
 type Connection struct {
-	Type   string
-	Name   string
-	Status string
-	Nodes  []string
+	Type   string   `json:"type,omitempty"`
+	Name   string   `json:"name,omitempty"`
+	Status string   `json:"status,omitempty"`
+	Nodes  []string `json:"nodes,omitempty"`
 }
 
 type ControlStatusPorts struct {
@@ -409,8 +409,8 @@ func (c *Control) CreateSTS(sts *appsv1.StatefulSet, commonConfiguration *Common
 }
 
 // UpdateSTS updates the STS.
-func (c *Control) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string) error {
-	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy)
+func (c *Control) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string, configChanged *bool) error {
+	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy, configChanged)
 }
 
 // PodIPListAndIPMapFromInstance gets a list with POD IPs and a map of POD names and IPs.

@@ -133,7 +133,7 @@ func (in *CassandraConfiguration) DeepCopyInto(out *CassandraConfiguration) {
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -389,7 +389,7 @@ func (in *ConfigConfiguration) DeepCopyInto(out *ConfigConfiguration) {
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -648,7 +648,7 @@ func (in *ControlConfiguration) DeepCopyInto(out *ControlConfiguration) {
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -918,7 +918,7 @@ func (in *KubemanagerConfiguration) DeepCopyInto(out *KubemanagerConfiguration) 
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -1354,7 +1354,7 @@ func (in *ProvisionManagerConfiguration) DeepCopyInto(out *ProvisionManagerConfi
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -1515,7 +1515,7 @@ func (in *RabbitmqConfiguration) DeepCopyInto(out *RabbitmqConfiguration) {
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -1874,7 +1874,7 @@ func (in *VrouterConfiguration) DeepCopyInto(out *VrouterConfiguration) {
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -2039,7 +2039,7 @@ func (in *WebuiConfiguration) DeepCopyInto(out *WebuiConfiguration) {
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {
@@ -2193,7 +2193,7 @@ func (in *ZookeeperConfiguration) DeepCopyInto(out *ZookeeperConfiguration) {
 	*out = *in
 	if in.Containers != nil {
 		in, out := &in.Containers, &out.Containers
-		*out = make(map[string]*Container, len(*in))
+		*out = make([]*Container, len(*in))
 		for key, val := range *in {
 			var outVal *Container
 			if val == nil {

@@ -31,7 +31,7 @@ type ProvisionManagerSpec struct {
 // ProvisionManagerConfiguration defines the provision manager configuration
 // +k8s:openapi-gen=true
 type ProvisionManagerConfiguration struct {
-	Containers map[string]*Container `json:"containers,omitempty"`
+	Containers []*Container `json:"containers,omitempty"`
 }
 
 // ProvisionManagerStatus defines the observed state of ProvisionManager
@@ -184,7 +184,7 @@ func (c *ProvisionManager) CreateSTS(sts *appsv1.StatefulSet, commonConfiguratio
 
 //UpdateSTS updates the STS
 func (c *ProvisionManager) UpdateSTS(sts *appsv1.StatefulSet, commonConfiguration *CommonConfiguration, instanceType string, request reconcile.Request, scheme *runtime.Scheme, reconcileClient client.Client, strategy string) error {
-	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy)
+	return UpdateSTS(sts, commonConfiguration, instanceType, request, scheme, reconcileClient, strategy, nil)
 }
 
 func (c *ProvisionManager) getHostnameFromAnnotations(podName string, namespace string, client client.Client) (string, error) {
