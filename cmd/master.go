@@ -76,6 +76,15 @@ var masterAddCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		err = utils.Retry(10, 2*time.Second, func() (err error) {
+			fmt.Println("Waiting for k3s token to be written")
+			err = master.getK3SToken()
+			return
+		})
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		masterPath := filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", master.ClusterName, "master", master.Name)
 		fmt.Println("export KUBECONFIG=" + masterPath + "/k3s.yaml")
 
@@ -91,6 +100,21 @@ func (m *Master) addMaster() error {
 	var args []string
 	masterPath := filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", m.ClusterName, "master", m.Name)
 	kernelpath := filepath.Join(os.Getenv("HOME"), ".ckube", "images")
+
+	cliArgs := `{
+			"cliargs": {
+			  "entries": {
+				"args": {
+				  "content": "server --cluster-cidr=10.32.0.0/12 --service-cidr=10.96.0.0/12 --no-flannel --no-deploy=traefik"
+				}
+			  }
+			}
+		}`
+	cliArgsPath := filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", m.ClusterName, "master", m.Name, "cliargs.json")
+	err := ioutil.WriteFile(cliArgsPath, []byte(cliArgs), 0644)
+	if err != nil {
+		log.Fatalf("Cannot write cliArgs to file: %v", err)
+	}
 	args = append(args, "-cpus="+strconv.Itoa(m.Cpus))
 	args = append(args, "-mem="+strconv.Itoa(m.Memory))
 	args = append(args, "-disk=file="+masterPath+"/disk2.img,size="+m.Disk+",format=qcow2")
@@ -99,6 +123,7 @@ func (m *Master) addMaster() error {
 	args = append(args, "-kernelpath="+kernelpath)
 	args = append(args, "-kernelprefix=ckube")
 	args = append(args, "-state="+masterPath)
+	args = append(args, "-data-file="+cliArgsPath)
 	run.Run(args)
 	ipAddress, err := ioutil.ReadFile(masterPath + "/vm.ip")
 	if err != nil {
@@ -162,6 +187,48 @@ func (m *Master) getK3SConfig() error {
 	err = ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", m.ClusterName, "master", m.Name, "k3s.yaml"), k3sconfig, 0644)
 	if err != nil {
 		log.Fatalf("Cannot write k3s config to file: %v", err)
+	}
+
+	return nil
+}
+
+func (m *Master) getK3SToken() error {
+	agent, err := getAgent()
+	if err != nil {
+		return err
+	}
+	client, err := ssh.Dial("tcp", m.IP+":22", &ssh.ClientConfig{
+		User: "root",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeysCallback(agent.Signers),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // FIXME: please be more secure in checking host keys
+	})
+	if err != nil {
+		return err
+	}
+	session, err := client.NewSession()
+	if err != nil {
+		return err
+	}
+	results := make(chan string, 10)
+	timeout := time.After(10 * time.Second)
+	go func(session *ssh.Session) {
+		results <- executeCmd("ctr --namespace services.linuxkit tasks exec --exec-id ssh-xx k3s /bin/cat /var/lib/rancher/k3s/server/node-token", session)
+	}(session)
+	var k3stoken []byte
+	select {
+	case res := <-results:
+		k3stoken = []byte(res + "\n")
+		if len(strings.TrimSpace(string(k3stoken))) == 0 {
+			return fmt.Errorf("k3s token empty")
+		}
+	case <-timeout:
+		return fmt.Errorf("timed out")
+	}
+	err = ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", m.ClusterName, "master", m.Name, "node-token"), k3stoken, 0644)
+	if err != nil {
+		log.Fatalf("Cannot write k3s token to file: %v", err)
 	}
 
 	return nil

@@ -311,11 +311,13 @@ func runHyperKit(args []string) {
 
 	// Generate new UUID, otherwise /sys/class/dmi/id/product_uuid is identical on all VMs
 	vmUUID := uuid.New().String()
+
 	mac, err := getMACAddressFromUUID(vmUUID)
 	if err != nil {
 		log.Fatalf("Cannot get MAC from UUID: %v", err)
 	}
 
+	//mac := "de:ad:be:ef:ba:be"
 	// Run
 	var cmdline string
 	if *kernelBoot || *squashFSBoot {
@@ -480,6 +482,7 @@ func runHyperKit(args []string) {
 		vmIP, err = getIPAddressFromFile(mac, leasesPath)
 		return
 	})
+	//Path:"/Users/mhenkel/.ckube/clusters/test2/master/bla/hyperkit.json"
 	if err != nil {
 		log.Fatalf("Cannot get IP from MAC: %v", err)
 	}

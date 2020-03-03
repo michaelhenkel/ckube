@@ -723,10 +723,9 @@ spec:
             image: python:alpine
           - name: nodeinit
             image: opencontrailnightly/contrail-node-init:1910-latest
-          - name: nodemanager
-            image: opencontrailnightly/contrail-nodemgr:1910-latest
           - name: vrouteragent
             image: opencontrailnightly/contrail-vrouter-agent:1910-latest
+            command: ["bash","-c","/usr/bin/contrail-vrouter-agent --config_file /etc/mycontrail/vrouter.${POD_IP}"]
           - name: vroutercni
             image: michaelhenkel/contrailcni:v0.0.1
           - name: vrouterkernelbuildinit
@@ -751,10 +750,9 @@ spec:
             image: python:alpine
           - name: nodeinit
             image: opencontrailnightly/contrail-node-init:1910-latest
-          - name: nodemanager
-            image: opencontrailnightly/contrail-nodemgr:1910-latest
           - name: vrouteragent
             image: opencontrailnightly/contrail-vrouter-agent:1910-latest
+            command: ["bash","-c","/usr/bin/contrail-vrouter-agent --config_file /etc/mycontrail/vrouter.${POD_IP}"]
           - name: vroutercni
             image: michaelhenkel/contrailcni:v0.0.1
           - name: vrouterkernelbuildinit
