@@ -32,11 +32,7 @@ var clusterCmd = &cobra.Command{
 
 func getClusters(clusterCmd *cobra.Command) error {
 	clusterPath := filepath.Join(os.Getenv("HOME"), ".ckube", "clusters")
-	files, err := ioutil.ReadDir(clusterPath)
-	if err != nil {
-		return err
-	}
-
+	files, _ := ioutil.ReadDir(clusterPath)
 	for _, f := range files {
 		if f.IsDir() {
 			var ccmd = &cobra.Command{
@@ -51,6 +47,7 @@ func getClusters(clusterCmd *cobra.Command) error {
 
 			ccmd.AddCommand(addCmd)
 			ccmd.AddCommand(deleteCmd)
+			ccmd.AddCommand(getCmd)
 			clusterCmd.AddCommand(ccmd)
 		}
 	}

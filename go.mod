@@ -31,6 +31,7 @@ require (
 	github.com/gophercloud/utils v0.0.0-20181029231510-34f5991525d1 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
+	github.com/michaelhenkel/remoteExec v0.0.0-20200307054000-292dcd7ed386
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936 // indirect
 	github.com/moby/datakit v0.0.0-20170703142523-97b3d2305353 // indirect
@@ -50,18 +51,20 @@ require (
 	github.com/rn/iso9660wrap v0.0.0-20171120145750-baf8d62ad315
 	github.com/scaleway/scaleway-sdk-go v0.0.0-20190617160902-20b731586975 // indirect
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/surma/gocpio v1.0.2-0.20160926205914-fcb68777e7dc
 	github.com/theupdateframework/notary v0.6.0
 	github.com/xeipuuv/gojsonschema v1.1.0
 	github.com/zchee/go-vmnet v0.0.0-20161021174912-97ebf9174097
-	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
-	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
+	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
+	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
 	google.golang.org/api v0.6.1-0.20190607001116-5213b8090861
+	google.golang.org/genproto v0.0.0-20200306153348-d950eab6f860 // indirect
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect

@@ -13,6 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Memory int
+var Cpus int
+var Disk string
+
 func init() {
 	nodeAddCmd.Flags().IntVarP(&Memory, "memory", "m", 4000, "memory")
 	nodeAddCmd.Flags().IntVarP(&Cpus, "cpus", "c", 2, "cpus")

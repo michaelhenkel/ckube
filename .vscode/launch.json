@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "/Users/mhenkel/go/src/github.com/michaelhenkel/ckube/main.go",
             "env": {},
-            "args": ["cluster","test2","add","master","bla"]
+            "args": ["cluster","cluster1","add","tunnel", "-u", "mhenkel","dscf"]
         }
     ]
 }

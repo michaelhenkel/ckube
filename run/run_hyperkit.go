@@ -311,11 +311,12 @@ func runHyperKit(args []string) {
 
 	// Generate new UUID, otherwise /sys/class/dmi/id/product_uuid is identical on all VMs
 	vmUUID := uuid.New().String()
-
-	mac, err := getMACAddressFromUUID(vmUUID)
-	if err != nil {
-		log.Fatalf("Cannot get MAC from UUID: %v", err)
-	}
+	/*
+		mac, err := getMACAddressFromUUID(vmUUID)
+		if err != nil {
+			log.Fatalf("Cannot get MAC from UUID: %v", err)
+		}
+	*/
 
 	//mac := "de:ad:be:ef:ba:be"
 	// Run
@@ -476,22 +477,23 @@ func runHyperKit(args []string) {
 	if err != nil {
 		log.Fatalf("Cannot run hyperkit: %v", err)
 	}
+	/*
+		var vmIP string
 
-	var vmIP string
-	err = retry(10, 2*time.Second, func() (err error) {
-		vmIP, err = getIPAddressFromFile(mac, leasesPath)
-		return
-	})
-	//Path:"/Users/mhenkel/.ckube/clusters/test2/master/bla/hyperkit.json"
-	if err != nil {
-		log.Fatalf("Cannot get IP from MAC: %v", err)
-	}
+		err = retry(10, 2*time.Second, func() (err error) {
+			vmIP, err = getIPAddressFromFile(mac, leasesPath)
+			return
+		})
+		if err != nil {
+			log.Fatalf("Cannot get IP from MAC: %v", err)
+		}
 
-	ipB := []byte(vmIP + "\n")
-	err = ioutil.WriteFile(*state+"/vm.ip", ipB, 0644)
-	if err != nil {
-		log.Fatalf("Cannot write IP to file: %v", err)
-	}
+		ipB := []byte(vmIP + "\n")
+		err = ioutil.WriteFile(*state+"/vm.ip", ipB, 0644)
+		if err != nil {
+			log.Fatalf("Cannot write IP to file: %v", err)
+		}
+	*/
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
