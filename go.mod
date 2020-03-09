@@ -10,6 +10,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/ScaleFT/sshkeys v0.0.0-20181112160850-82451a803681 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
+	github.com/briandowns/spinner v1.9.0
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/containerd/containerd v1.3.0
@@ -31,9 +32,9 @@ require (
 	github.com/gophercloud/utils v0.0.0-20181029231510-34f5991525d1 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
-	github.com/michaelhenkel/remoteExec v0.0.0-20200307054000-292dcd7ed386
+	github.com/michaelhenkel/remoteExec v0.0.0-20200309184923-7cbdf26306c7
 	github.com/miekg/pkcs11 v1.0.3 // indirect
-	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936 // indirect
+	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/moby/datakit v0.0.0-20170703142523-97b3d2305353 // indirect
 	github.com/moby/hyperkit v0.0.0-20180416161519-d65b09c1c28a
 	github.com/moby/vpnkit v0.1.2-0.20171107134956-0e4293bb1058
@@ -62,9 +63,9 @@ require (
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
+	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527
 	google.golang.org/api v0.6.1-0.20190607001116-5213b8090861
-	google.golang.org/genproto v0.0.0-20200306153348-d950eab6f860 // indirect
+	google.golang.org/genproto v0.0.0-20200309141739-5b75447e413d // indirect
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect

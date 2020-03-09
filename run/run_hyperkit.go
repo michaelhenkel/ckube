@@ -18,8 +18,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/michaelhenkel/ckube/hyperkit"
 	"github.com/michaelhenkel/ckube/utils"
-	hyperkit "github.com/moby/hyperkit/go"
+
+	//hyperkit "github.com/moby/hyperkit/go"
 	"github.com/moby/vpnkit/go/pkg/vpnkit"
 	log "github.com/sirupsen/logrus"
 	vmnet "github.com/zchee/go-vmnet"
@@ -146,9 +148,7 @@ const (
 
 // Process the run arguments and execute run
 func runHyperKit(args []string) {
-	if err := verifyRootPermissions(); err != nil {
-		fmt.Println(err)
-	}
+
 	flags := flag.NewFlagSet("hyperkit", flag.ExitOnError)
 	invoked := filepath.Base(os.Args[0])
 	flags.Usage = func() {
@@ -384,7 +384,7 @@ func runHyperKit(args []string) {
 	}
 
 	// Select network mode
-	var vpnkitProcess *os.Process
+	//var vpnkitProcess *os.Process
 	var vpnkitPortSocket string
 	if *networking == "" || *networking == "default" {
 		dflt := hyperkitNetworkingDefault
@@ -425,20 +425,43 @@ func runHyperKit(args []string) {
 			h.VPNKitSock = filepath.Join(*state, "vpnkit_eth.sock")
 			vpnkitPortSocket = filepath.Join(*state, "vpnkit_port.sock")
 			vsockSocket := filepath.Join(*state, "connect")
-			vpnkitProcess, err = launchVPNKit(*vpnkitPath, h.VPNKitSock, vsockSocket, vpnkitPortSocket)
+			vpnkitCMD, err := launchVPNKit(*vpnkitPath, h.VPNKitSock, vsockSocket, vpnkitPortSocket, *state)
 			if err != nil {
 				log.Fatalln("Unable to start vpnkit: ", err)
 			}
-			defer shutdownVPNKit(vpnkitProcess)
-			log.RegisterExitHandler(func() {
-				shutdownVPNKit(vpnkitProcess)
-			})
+			vpnkitPidFile, err := os.Create(filepath.Join(*state, "vpnkit.pid")) // creating...
+			if err != nil {
+				fmt.Printf("error creating file: %v", err)
+				return
+			}
+			defer vpnkitPidFile.Close()
+			_, err = vpnkitPidFile.WriteString(fmt.Sprintf("%d\n", vpnkitCMD.Process.Pid)) // writing...
+			if err != nil {
+				fmt.Printf("error writing string: %v", err)
+			}
+			errCh := make(chan error, 1)
+			// Make sure we reap the child when it exits
+			go func() {
+				log.Debugf("vpnkit: Waiting for %#v", vpnkitCMD)
+				errCh <- vpnkitCMD.Wait()
+			}()
+			//vpnkitProcess = vpnkitCMD.Process
+			/*
+				defer shutdownVPNKit(vpnkitProcess)
+				log.RegisterExitHandler(func() {
+					shutdownVPNKit(vpnkitProcess)
+				})
+			*/
 			// The guest will use this 9P mount to configure which ports to forward
 			h.Sockets9P = []hyperkit.Socket9P{{Path: vpnkitPortSocket, Tag: "port"}}
 			// VSOCK port 62373 is used to pass traffic from host->guest
 			h.VSockPorts = append(h.VSockPorts, 62373)
 		}
 	case hyperkitNetworkingVMNet:
+		if err := verifyRootPermissions(); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		h.VPNKitSock = ""
 		h.VMNet = true
 	case hyperkitNetworkingNone:
@@ -474,9 +497,14 @@ func runHyperKit(args []string) {
 		}
 	}
 	_, err = h.Start(cmdline)
+	//err = h.Run(cmdline)
 	if err != nil {
 		log.Fatalf("Cannot run hyperkit: %v", err)
 	}
+	/*
+		msg := <-hChan
+		fmt.Println(msg)
+	*/
 	/*
 		var vmIP string
 
@@ -541,7 +569,7 @@ func createListenSocket(path string) (*os.File, error) {
 // launchVPNKit starts a new instance of VPNKit. Ethernet socket and port socket
 // will be created and passed to VPNKit. The VSOCK socket should be created
 // by HyperKit when it starts.
-func launchVPNKit(vpnkitPath, etherSock, vsockSock, portSock string) (*os.Process, error) {
+func launchVPNKit(vpnkitPath, etherSock, vsockSock, portSock, state string) (*exec.Cmd, error) {
 	var err error
 
 	if vpnkitPath == "" {
@@ -571,18 +599,47 @@ func launchVPNKit(vpnkitPath, etherSock, vsockSock, portSock string) (*os.Proces
 
 	cmd.Env = os.Environ() // pass env for DEBUG
 
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	stdout, err := os.Create(filepath.Join(state, "vpnkit.stdout"))
+	if err != nil {
+		fmt.Printf("error creating vpnkit stdout: %v", err)
+		return nil, err
+	}
+	defer stdout.Close()
+
+	stdin, err := os.Create(filepath.Join(state, "vpnkit.stdin"))
+	if err != nil {
+		fmt.Printf("error creating vpnkit stdin: %v", err)
+		return nil, err
+	}
+	defer stdin.Close()
+
+	stderr, err := os.Create(filepath.Join(state, "vpnkit.stderr"))
+	if err != nil {
+		fmt.Printf("error creating vpnkit stderr: %v", err)
+		return nil, err
+	}
+	defer stderr.Close()
+
+	cmd.Stdin = stdin
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	log.Debugf("Starting vpnkit: %v", cmd.Args)
+
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
 
-	go cmd.Wait() // run in background
+	//go cmd.Wait() // run in background
 
-	return cmd.Process, nil
+	/*
+		fork := forkprocess.NewForkProcess(os.Stdin, os.Stdout, os.Stderr, uint32(os.Getuid()), uint32(os.Getgid()), "/")
+
+		args := []string{vpnkitPath, "--ethernet=" + etherSock, "--vsock-path=" + vsockSock, "--port=" + portSock}
+		err = fork.Exec(true, vpnkitPath, args)
+	*/
+
+	return cmd, nil
 }
 
 // vpnkitPublishPorts instructs VPNKit to expose ports from the VM on localhost

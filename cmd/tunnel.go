@@ -27,7 +27,6 @@ var tunnelAddCmd = &cobra.Command{
 	Use:   "tunnel",
 	Short: "tunnel",
 	Long:  `tunnel`,
-	Args:  cobra.RangeArgs(1, 1),
 	Run: func(cmd *cobra.Command, args []string) {
 		aCmd := cmd.Parent()
 		clusterName := aCmd.Parent().Name()

@@ -20,7 +20,7 @@ var keyGetCmd = &cobra.Command{
 	Use:   "key",
 	Short: "key",
 	Long:  `key`,
-	Args:  cobra.RangeArgs(1, 1),
+	//Args:  cobra.RangeArgs(1, 1),
 	Run: func(cmd *cobra.Command, args []string) {
 		//aCmd := cmd.Parent()
 		clusterName := cmd.Parent().Parent().Name()
@@ -36,9 +36,9 @@ var keyGetCmd = &cobra.Command{
 			Socket: socketPath,
 		}
 		var pubKey *string
-		fmt.Println("getting pub key from socket ")
+		//fmt.Println("getting pub key from socket ")
 		err = utils.Retry(40, 2*time.Second, func() (err error) {
-			fmt.Println("Trying to get pub key")
+			//fmt.Println("Trying to get pub key")
 			pubKey, err = e.ExecuteCommand("/bin/cat /id_rsa.pub")
 			return
 		})

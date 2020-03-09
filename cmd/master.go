@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/michaelhenkel/ckube/kuberesources"
 	"github.com/michaelhenkel/ckube/run"
 	"github.com/michaelhenkel/ckube/utils"
@@ -29,6 +30,7 @@ var MasterNetwork string
 var MasterCpus int
 var MasterDisk string
 var CreateContrail bool
+var NoTunnel bool
 
 func init() {
 	masterAddCmd.Flags().IntVarP(&MasterMemory, "memory", "m", 8000, "memory")
@@ -36,6 +38,7 @@ func init() {
 	masterAddCmd.Flags().StringVarP(&MasterDisk, "disk", "d", "15G", "disk")
 	masterAddCmd.Flags().StringVarP(&MasterNetwork, "net", "v", "vpnkit", "network mode")
 	masterAddCmd.Flags().BoolVarP(&CreateContrail, "contrail", "x", false, "create contrail")
+	masterAddCmd.Flags().BoolVarP(&NoTunnel, "notunnel", "t", false, "don't create a tunnel")
 	addCmd.AddCommand(masterAddCmd)
 }
 
@@ -48,6 +51,7 @@ type Master struct {
 	Memory         int
 	Disk           string
 	CreateContrail bool
+	NoTunnel       bool
 	Network        string
 }
 
@@ -67,6 +71,7 @@ var masterAddCmd = &cobra.Command{
 			Memory:         MasterMemory,
 			Disk:           MasterDisk,
 			CreateContrail: CreateContrail,
+			NoTunnel:       NoTunnel,
 			Network:        MasterNetwork,
 		}
 
@@ -77,9 +82,10 @@ var masterAddCmd = &cobra.Command{
 
 		masterPath := filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", master.ClusterName, "master", master.Name)
 		socketPath := masterPath + "/00000003.00000947"
-
+		fmt.Printf("Waiting for socket path...  ")
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
 		err := utils.Retry(10, 2*time.Second, func() (err error) {
-			fmt.Println("Waiting for socket path")
 			_, err = os.Stat(socketPath)
 			return
 		})
@@ -87,15 +93,17 @@ var masterAddCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-
+		s.Stop()
+		fmt.Printf("\n")
 		e := &executor.Executor{
 			Socket: socketPath,
 		}
 
 		var ipResult *string
-		fmt.Println("getting ip address from socket ")
+		fmt.Printf("Waiting for ip address...  ")
+		s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
 		err = utils.Retry(40, 2*time.Second, func() (err error) {
-			fmt.Println("Trying to get IP")
 			ipResult, err = e.GetIP()
 			return
 		})
@@ -103,6 +111,8 @@ var masterAddCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		s.Stop()
+		fmt.Printf("\n")
 		ip := []byte(*ipResult + "\n")
 		err = ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", master.ClusterName, "master", master.Name, "vm.ip"), ip, 0644)
 		master.InternalIP = *ipResult
@@ -113,17 +123,31 @@ var masterAddCmd = &cobra.Command{
 			master.ExternalIP = "127.0.0.1"
 		}
 
-		if err := master.waitForK3S(); err != nil {
+		fmt.Printf("Waiting for k3s to come up...  ")
+		s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+		err = utils.Retry(10, 2*time.Second, func() (err error) {
+			result, err := e.ServiceRunning(master.ExternalIP, "tcp", 6443)
+			if (result == nil || !*result) || err != nil {
+				err = fmt.Errorf("k3s service not running on %s:%d", master.ExternalIP, 6443)
+			}
+			return
+		})
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		s.Stop()
+		fmt.Printf("\n")
 
 		var tokenResult *string
+		fmt.Printf("Waiting for k3s token...  ")
+		s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
 		err = utils.Retry(10, 2*time.Second, func() (err error) {
-			fmt.Println("Trying to get /var/lib/rancher/k3s/server/token")
 			file := "/var/lib/rancher/k3s/server/token"
-			tokenResult, err := e.GetFileContent(file)
-			if *tokenResult == "" {
+			tokenResult, err = e.GetFileContent(file)
+			if strings.Trim(*tokenResult, "\n") == "file doesn't exists" {
 				err = fmt.Errorf("couldn't get content of /var/lib/rancher/k3s/server/token")
 			}
 			return
@@ -132,16 +156,20 @@ var masterAddCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		s.Stop()
+		fmt.Printf("\n")
 		k3stoken := []byte(*tokenResult + "\n")
 		err = ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", master.ClusterName, "master", master.Name, "node-token"), k3stoken, 0644)
 
 		var k3sConfigResult *string
+		fmt.Printf("Waiting for k3s config...   ")
+		s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
 		err = utils.Retry(10, 2*time.Second, func() (err error) {
-			fmt.Println("Trying to get /containers/services/k3s/rootfs/etc/rancher/k3s/k3s.yaml")
-			file := "/containers/services/k3s/rootfs/etc/rancher/k3s/k3s.yaml"
-			k3sConfigResult, err := e.GetFileContent(file)
-			if *k3sConfigResult == "" {
-				err = fmt.Errorf("couldn't get content of /containers/services/k3s/rootfs/etc/rancher/k3s/k3s.yaml")
+			file := "/etc/rancher/k3s/k3s.yaml"
+			k3sConfigResult, err = e.GetFileContent(file)
+			if strings.Trim(*k3sConfigResult, "\n") == "file doesn't exists" {
+				err = fmt.Errorf("couldn't get content of /etc/rancher/k3s/k3s.yaml")
 			}
 			return
 		})
@@ -149,8 +177,9 @@ var masterAddCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-
-		k3sconfig := strings.Replace(string(*k3sConfigResult), "127.0.0.1", string(ip), -1)
+		s.Stop()
+		fmt.Printf("\n")
+		k3sconfig := strings.Replace(string(*k3sConfigResult), "127.0.0.1", strings.Trim(string(ip), "\n"), -1)
 		k3sconfigByte := []byte(k3sconfig)
 		err = ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", master.ClusterName, "master", master.Name, "k3s.yaml"), k3sconfigByte, 0644)
 		if err != nil {
@@ -158,6 +187,10 @@ var masterAddCmd = &cobra.Command{
 		}
 
 		fmt.Println("export KUBECONFIG=" + masterPath + "/k3s.yaml")
+
+		if !master.NoTunnel {
+
+		}
 
 		if !master.CreateContrail {
 			if err = kuberesources.CreateContrailResources(masterPath + "/k3s.yaml"); err != nil {
