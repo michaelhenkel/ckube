@@ -222,7 +222,12 @@ var masterAddCmd = &cobra.Command{
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			_, err = e.SetupTunnel(6443, 6443, user.Username, ip.String()+":22")
+			_, err = e.SetupTunnel(6443, 6443, user.Username, ip.String()+":22", master.InternalIP)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			_, err = e.SetupTunnel(8143, 8143, user.Username, ip.String()+":22", master.InternalIP)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

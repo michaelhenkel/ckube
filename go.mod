@@ -32,7 +32,7 @@ require (
 	github.com/gophercloud/utils v0.0.0-20181029231510-34f5991525d1 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
-	github.com/michaelhenkel/remoteExec v0.0.0-20200310172055-df8db6ec2c66
+	github.com/michaelhenkel/remoteExec v0.0.0-20200310220941-e44d9a592c36
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/moby/datakit v0.0.0-20170703142523-97b3d2305353 // indirect
@@ -66,6 +66,7 @@ require (
 	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527
 	google.golang.org/api v0.6.1-0.20190607001116-5213b8090861
 	google.golang.org/genproto v0.0.0-20200310143817-43be25429f5a // indirect
+	google.golang.org/grpc v1.28.0 // indirect
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect

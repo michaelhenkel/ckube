@@ -14,17 +14,20 @@ var HostPort int
 var VMPort int
 var Username string
 var Address string
+var ListenAddress string
 
 func init() {
 	tunnelAddCmd.Flags().IntVarP(&HostPort, "hostport", "p", 6443, "host port")
 	tunnelAddCmd.Flags().IntVarP(&VMPort, "vmport", "v", 6443, "vm port")
 	tunnelAddCmd.Flags().StringVarP(&Username, "user", "u", "", "username")
 	tunnelAddCmd.Flags().StringVarP(&Address, "address", "a", "192.168.64.1:22", "address")
+	tunnelAddCmd.Flags().StringVarP(&ListenAddress, "listenaddress", "l", "192.168.64.2", "listen address")
 	addCmd.AddCommand(tunnelAddCmd)
 	tunnelDeleteCmd.Flags().IntVarP(&HostPort, "hostport", "p", 6443, "host port")
 	tunnelDeleteCmd.Flags().IntVarP(&VMPort, "vmport", "v", 6443, "vm port")
 	tunnelDeleteCmd.Flags().StringVarP(&Username, "user", "u", "", "username")
 	tunnelDeleteCmd.Flags().StringVarP(&Address, "address", "a", "192.168.64.1:22", "address")
+	tunnelDeleteCmd.Flags().StringVarP(&ListenAddress, "listenaddress", "l", "192.168.64.2", "listen address")
 	deleteCmd.AddCommand(tunnelDeleteCmd)
 }
 
@@ -75,7 +78,7 @@ var tunnelAddCmd = &cobra.Command{
 			Socket: socketPath,
 		}
 
-		result, err := e.SetupTunnel(VMPort, HostPort, Username, Address)
+		result, err := e.SetupTunnel(VMPort, HostPort, Username, Address, ListenAddress)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
