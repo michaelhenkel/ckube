@@ -42,7 +42,7 @@ services:
     command: ["/server","-socketpath","/run/remotexec.sock"]
     capabilities:
      - all
-    #command: ["sh","-c","while true; do sleep 10;done"]
+#    #command: ["sh","-c","while true; do sleep 10;done"]
     binds:
     - /run:/run
     - /var/rancher:/var/lib/rancher

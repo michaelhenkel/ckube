@@ -1,7 +1,6 @@
 package kuberesources
 
 import (
-	"fmt"
 	"time"
 
 	contrailv1 "github.com/Juniper/contrail-operator/pkg/apis/contrail/v1alpha1"
@@ -154,7 +153,6 @@ func CreateContrailResources(configPath string) error {
 		return err
 	}
 
-	fmt.Println("Creating CRDs")
 	_, err = crdClientSet.ApiextensionsV1beta1().CustomResourceDefinitions().Create(&contrailResources.CRDs.Manager)
 	if err != nil {
 		return err
@@ -197,10 +195,7 @@ func CreateContrailResources(configPath string) error {
 		return err
 	}
 
-	fmt.Println("CRDs created")
-
 	err = utils.Retry(10, 2*time.Second, func() (err error) {
-		fmt.Println("trying to get Manager CRD")
 		err = getResource(crdClientSet, contrailResources.CRDs.Manager.Name)
 		return
 	})
@@ -215,7 +210,6 @@ func CreateContrailResources(configPath string) error {
 	}
 
 	err = utils.Retry(10, 2*time.Second, func() (err error) {
-		fmt.Println("Creating manager CR")
 		_, err = managerClient.Create(contrailResources.Manager.Name, &contrailResources.Manager)
 		return
 	})
@@ -223,7 +217,6 @@ func CreateContrailResources(configPath string) error {
 		return err
 	}
 
-	fmt.Println("Creating deployment")
 	_, err = clientSet.AppsV1().Deployments(contrailResources.Namespace.Name).Create(&contrailResources.Deployment)
 	if err != nil {
 		return err
@@ -234,7 +227,6 @@ func CreateContrailResources(configPath string) error {
 
 func getResource(clientSet *apiextensionsclientset.Clientset, name string) error {
 	getOptions := metav1.GetOptions{}
-	fmt.Println("Getting manager crd ", name)
 	_, err := clientSet.ApiextensionsV1().CustomResourceDefinitions().Get(name, getOptions)
 	if err != nil {
 		return err
@@ -647,7 +639,7 @@ spec:
           - name: nodeinit
             image: opencontrailnightly/contrail-node-init:1910-latest
           - name: statusmonitor
-            image: michaelhenkel/contrail-statusmonitor:debug
+            image: michaelhenkel/contrail-statusmonitor:v0.1
           zookeeperInstance: zookeeper1
     kubemanagers:
     - metadata:
@@ -671,6 +663,7 @@ spec:
           ipFabricForwarding: false
           ipFabricSnat: true
           kubernetesTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+          kubernetesAPIServer: 127.0.0.1
           useKubeadmConfig: false
           zookeeperInstance: zookeeper1
     provisionManager:

@@ -74,7 +74,7 @@ func checkAndFetchImages(path string) error {
 			defer output.Close()
 
 			ctx := context.Background()
-			driveService, err := drive.NewService(ctx, option.WithAPIKey("AIzaSyBhVLu7Kk8HGmhzSO7Xn6GV2_WBCT9nSHc"))
+			driveService, err := drive.NewService(ctx, option.WithAPIKey(""))
 			if err != nil {
 				return err
 			}

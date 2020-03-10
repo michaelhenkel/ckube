@@ -1,0 +1,145 @@
+package cmd
+
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+
+	"github.com/michaelhenkel/ckube/build"
+	"github.com/spf13/cobra"
+)
+
+func init() {
+	rootCmd.AddCommand(buildCmd)
+}
+
+var buildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "build",
+	Long:  `build`,
+
+	Run: func(cmd *cobra.Command, args []string) {
+		cfgPath := filepath.Join(os.Getenv("HOME"), ".ckube", "images")
+		if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+			err := os.MkdirAll(cfgPath, os.ModePerm)
+			if err != nil {
+				fmt.Printf("Failed to create %q\n", cfgPath)
+				os.Exit(1)
+			}
+			fmt.Printf("Image path created in %q\n", cfgPath)
+		}
+		contrailYMLBytes := []byte(contrailYML)
+		err := ioutil.WriteFile(filepath.Join(cfgPath, "contrail.yaml"), contrailYMLBytes, 0644)
+		if err != nil {
+			log.Fatalf("Cannot write config to file: %v", err)
+		}
+		var buildArgs []string
+		buildArgs = append(buildArgs, "-format=kernel+initrd")
+		buildArgs = append(buildArgs, "-name=ckube")
+		buildArgs = append(buildArgs, "-dir="+cfgPath)
+		buildArgs = append(buildArgs, filepath.Join(cfgPath, "contrail.yaml"))
+		build.Build(buildArgs)
+
+	},
+}
+
+var contrailYML = `
+kernel:
+  image: linuxkit/kernel:4.19.99
+  cmdline: "console=tty0 console=ttyS0 console=ttyAMA0"
+init:
+  - linuxkit/init:a4fcf333298f644dfac6adf680b83140927aa85e
+  - linuxkit/runc:69b4a35eaa22eba4990ee52cccc8f48f6c08ed03
+  - linuxkit/containerd:09553963ed9da626c25cf8acdf6d62ec37645412
+onboot:
+  - name: format
+    image: linuxkit/format:v0.7
+    command: ["/usr/bin/format", "-force", "-type", "xfs", "-label", "DATA", "-verbose", "/dev/sda"]
+  - name: mount
+    image: linuxkit/mount:v0.7
+    command: ["/usr/bin/mountie", "-label", "DATA", "/var/rancher" ]
+  - name: dhcpcd
+    image: linuxkit/dhcpcd:v0.7
+    command: ["/sbin/dhcpcd", "--nobackground", "-f", "/dhcpcd.conf", "-1"]
+  - name: metadata
+    image: linuxkit/metadata:v0.7
+    command: ["/usr/bin/metadata", "cdrom"]
+  - name: vrouter
+    image: michaelhenkel/vrouter
+    binds:
+    - /dev:/dev
+    - /lib/modules:/lib/modules
+    capabilities:
+     - all
+services:
+  - name: getty
+    image: linuxkit/getty:v0.7
+    env:
+    - INSECURE=true
+  - name: sshd
+    image: linuxkit/sshd:v0.7
+    cgroupsPath: systemreserved/sshd
+  - name: remotexec
+    pid: host
+    net: host
+    env:
+    - INSECURE=true
+    image: michaelhenkel/remotexec
+    command: ["/server","-socketpath","/run/remotexec.sock"]
+    capabilities:
+    - all
+    binds:
+    - /run:/run
+    - /var/rancher:/var/lib/rancher
+    - /var/rancher/etc:/etc/rancher
+    rootfsPropagation: shared
+    cgroupsPath: systemreserved/remotexec
+  - name: vsudd
+    image: linuxkit/vsudd:v0.7
+    binds:
+    - /run:/run
+    command: ["/vsudd",
+    "-inport","2375:unix:/run/remotexec.sock"]
+    runtime:
+      mkdir: ["/var/rancher_etc"]
+  - name: k3s
+    pid: host
+    env:
+     - INSECURE=true
+    image: docker.io/michaelhenkel/k3s:latest
+    mounts:
+    - type: cgroup
+      options: ["rw","nosuid","noexec","nodev","relatime"]
+    - type: bind
+      source: /sys/fs/cgroup
+      destination: /sys/fs/cgroup
+      options: ["rw","rbind","rshared","nosuid","noexec","nodev","relatime"]
+    runtime:
+      mkdir: ["/var/rancher","/var/rancher/etc"]
+    binds:
+    - /var/rancher:/var/lib/rancher
+    - /var/rancher/etc:/etc/rancher
+    - /proc:/proc
+    - /dev:/dev
+    - /run:/run
+    - /tmp:/tmp
+    - /etc/resolv.conf:/etc/resolv.conf
+    rootfsPropagation: shared
+    cgroupsPath: podruntime/k3s
+    capabilities:
+    - all
+    command: ["/bin/sh","-c","sed -i \"s/127.0.0.1.*/127.0.0.1 $(hostname)/g\" /etc/hosts; echo $(ifconfig vhost0 |grep \"inet addr:\" |awk -F\":\" '{print $2}' |awk '{print $1}') $(hostname) >> /etc/hosts ; /k3s $(/bin/cat /run/config/cliargs/args)"]
+    #command: ["/bin/sh","-c","while true;do sleep 10;done"]
+files:
+  - path: root/.ssh/authorized_keys
+    source: ~/.ssh/id_rsa.pub
+    mode: "0600"
+    optional: true
+    #  - path: /var/k3s/lower
+    #directory: true
+trust:
+  org:
+    - linuxkit
+`

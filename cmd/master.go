@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -33,7 +34,7 @@ var CreateContrail bool
 var NoTunnel bool
 
 func init() {
-	masterAddCmd.Flags().IntVarP(&MasterMemory, "memory", "m", 8000, "memory")
+	masterAddCmd.Flags().IntVarP(&MasterMemory, "memory", "m", 10000, "memory")
 	masterAddCmd.Flags().IntVarP(&MasterCpus, "cpus", "c", 4, "cpus")
 	masterAddCmd.Flags().StringVarP(&MasterDisk, "disk", "d", "15G", "disk")
 	masterAddCmd.Flags().StringVarP(&MasterNetwork, "net", "v", "vpnkit", "network mode")
@@ -81,6 +82,7 @@ var masterAddCmd = &cobra.Command{
 		}
 
 		masterPath := filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", master.ClusterName, "master", master.Name)
+
 		socketPath := masterPath + "/00000003.00000947"
 		fmt.Printf("Waiting for socket path...  ")
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -179,25 +181,81 @@ var masterAddCmd = &cobra.Command{
 		}
 		s.Stop()
 		fmt.Printf("\n")
-		k3sconfig := strings.Replace(string(*k3sConfigResult), "127.0.0.1", strings.Trim(string(ip), "\n"), -1)
+		k3sconfig := strings.Replace(string(*k3sConfigResult), "127.0.0.1", strings.Trim(string(master.ExternalIP), "\n"), -1)
 		k3sconfigByte := []byte(k3sconfig)
 		err = ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".ckube", "clusters", master.ClusterName, "master", master.Name, "k3s.yaml"), k3sconfigByte, 0644)
 		if err != nil {
 			log.Fatalf("Cannot write k3s config to file: %v", err)
 		}
 
-		fmt.Println("export KUBECONFIG=" + masterPath + "/k3s.yaml")
-
-		if !master.NoTunnel {
-
-		}
-
-		if !master.CreateContrail {
-			if err = kuberesources.CreateContrailResources(masterPath + "/k3s.yaml"); err != nil {
+		if !master.NoTunnel && master.Network == "vpnkit" {
+			fmt.Printf("Setting up reverse tunnel...   ")
+			s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+			s.Start()
+			ip := net.ParseIP(master.InternalIP)
+			ip = ip.To4()
+			if ip == nil {
+				log.Fatal("non ipv4 address")
+			}
+			ip = ip.Mask(ip.DefaultMask())
+			ip[3]++
+			ip[3]++
+			user, err := user.Current()
+			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			pubkey, err := e.GetFileContent("/id_rsa.pub")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			authHostFile := filepath.Join(os.Getenv("HOME"), ".ssh", "authorized_keys")
+			f, err := os.OpenFile(authHostFile,
+				os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			defer f.Close()
+			if _, err := f.WriteString(*pubkey + "\n"); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			_, err = e.SetupTunnel(6443, 6443, user.Username, ip.String()+":22")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			s.Stop()
+			fmt.Printf("\n")
 		}
+
+		if !master.CreateContrail {
+			fmt.Printf("Applying Contrail manifest...   ")
+			s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+			s.Start()
+			err = utils.Retry(10, 2*time.Second, func() (err error) {
+				err = kuberesources.CreateContrailResources(masterPath + "/k3s.yaml")
+				return
+			})
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			s.Stop()
+			fmt.Printf("\n")
+		}
+
+		fmt.Println("")
+		fmt.Println("export the kubeconfig by running:")
+		fmt.Println("export KUBECONFIG=" + masterPath + "/k3s.yaml")
+		fmt.Println("")
+		fmt.Println("watch progress of Contrail Services instantiation:")
+		fmt.Println("watch kubectl -n contrail get pods")
+		fmt.Println("")
+		fmt.Println("delete environment by running:")
+		fmt.Printf("ckube cluster %s delete\n", clusterName)
 
 	},
 }
@@ -216,6 +274,7 @@ func (m *Master) addMaster() error {
 		fmt.Printf("Created Node in %q\n", masterPath)
 	} else {
 		fmt.Printf("Node %s already exists in %q\n", m.Name, masterPath)
+
 	}
 
 	cliArgs := `{
