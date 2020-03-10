@@ -90,3 +90,5 @@ kubectl get pods -owide
 NAME    READY   STATUS    RESTARTS   AGE   IP              NODE                    NOMINATED NODE   READINESS GATES
 busy1   1/1     Running   0          15s   10.47.255.249   linuxkit-025000000001   <none>           <none>
 ```
+## Accessing Contrail Webui
+Open browser at https://127.0.0.1:8143

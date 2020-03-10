@@ -32,7 +32,7 @@ require (
 	github.com/gophercloud/utils v0.0.0-20181029231510-34f5991525d1 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
-	github.com/michaelhenkel/remoteExec v0.0.0-20200310220941-e44d9a592c36
+	github.com/michaelhenkel/remoteExec v0.0.0-20200310231444-f02d2b4842d6
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/moby/datakit v0.0.0-20170703142523-97b3d2305353 // indirect

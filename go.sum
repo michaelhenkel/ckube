@@ -649,6 +649,8 @@ github.com/michaelhenkel/remoteExec v0.0.0-20200310172055-df8db6ec2c66 h1:+hMIhy
 github.com/michaelhenkel/remoteExec v0.0.0-20200310172055-df8db6ec2c66/go.mod h1:hMMRsjMtN/t2ntc6xbZKMzPg8atWYWi5XtfrHSJZ9FQ=
 github.com/michaelhenkel/remoteExec v0.0.0-20200310220941-e44d9a592c36 h1:KWZyTqj6kExM+s0XS6pDjLi57ZHrok0Vq/8mDUggyBM=
 github.com/michaelhenkel/remoteExec v0.0.0-20200310220941-e44d9a592c36/go.mod h1:hMMRsjMtN/t2ntc6xbZKMzPg8atWYWi5XtfrHSJZ9FQ=
+github.com/michaelhenkel/remoteExec v0.0.0-20200310231444-f02d2b4842d6 h1:Yn2bb7jKf5Y+AzQilD9VYXYN5byaHZo82b2Fer84Hj8=
+github.com/michaelhenkel/remoteExec v0.0.0-20200310231444-f02d2b4842d6/go.mod h1:hMMRsjMtN/t2ntc6xbZKMzPg8atWYWi5XtfrHSJZ9FQ=
 github.com/miekg/dns v0.0.0-20181005163659-0d29b283ac0f/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.3/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.4/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
