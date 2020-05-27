@@ -26,7 +26,7 @@ ckube build
 ```
 ## Create inital cluster
 ```
-ckube create cluster cluster1
+ckube cluster create cluster1
 ```
 ## Add Master node to cluster
 Nodes can be created using either vpnkit or vmnet networking.    
